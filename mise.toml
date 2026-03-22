@@ -1,0 +1,12 @@
+[tools]
+elixir = "1.19.5"
+erlang = "28.3.1"
+node = "24"
+
+[tasks.install-pre-commit]
+description = "Install the pre-commit hook"
+run = "mise generate git-pre-commit --write --task=pre-commit"
+
+[tasks.pre-commit]
+description = "Pre-commit task to execute"
+run = "mix precommit"
