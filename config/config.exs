@@ -48,6 +48,7 @@ config :spark,
   ]
 
 config :scoreboard,
+  ash_domains: [Scoreboard.Derby],
   ecto_repos: [Scoreboard.Repo],
   generators: [timestamp_type: :utc_datetime]
 

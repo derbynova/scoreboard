@@ -1,4 +1,4 @@
-# Scoreboard
+# DerbyNova Scoreboard
 
 To start your Phoenix server:
 
