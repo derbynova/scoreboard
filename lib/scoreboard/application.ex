@@ -13,7 +13,9 @@ defmodule Scoreboard.Application do
       {Ecto.Migrator,
        repos: Application.fetch_env!(:scoreboard, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:scoreboard, :dns_cluster_query) || :ignore},
+      {Registry, keys: :unique, name: GameRegistry},
       {Phoenix.PubSub, name: Scoreboard.PubSub},
+      GameServer.Runtime.Supervisor,
       # Start a worker by calling: Scoreboard.Worker.start_link(arg)
       # {Scoreboard.Worker, arg},
       # Start to serve requests, typically the last entry
