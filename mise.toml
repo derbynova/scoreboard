@@ -10,3 +10,7 @@ run = "mise generate git-pre-commit --write --task=pre-commit"
 [tasks.pre-commit]
 description = "Pre-commit task to execute"
 run = "mix precommit"
+
+[tasks.claude]
+description = "Launch Claude Code with project architecture diagrams injected"
+run = "claude --append-system-prompt \"$(cat {{ config_root }}/.memory/ai/diagrams/*.md)\""
