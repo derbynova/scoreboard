@@ -113,6 +113,31 @@ defmodule ScoreboardWeb.GameLiveTest do
       assert render(view) =~ "Game Over"
     end
 
+    test "negative score via -1 button subtracts points", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("operator-neg-score")
+
+      {:ok, view, _html} = live(conn, ~p"/games/operator-neg-score/operator")
+
+      # Start period and jam
+      render_click(view, :start_period)
+      :timer.sleep(150)
+      render_click(view, :start_jam)
+      :timer.sleep(150)
+
+      # Add 3 points to home
+      render_click(view, :score, %{"team" => "home", "points" => "3"})
+      :timer.sleep(150)
+
+      # Subtract 1 via -1 button
+      render_click(view, :score, %{"team" => "home", "points" => "-1"})
+      :timer.sleep(150)
+
+      # Home score should be 2
+      html = render(view)
+      assert html =~ "2"
+      refute html =~ "Invalid points value"
+    end
+
     test "timeout cycle", %{conn: conn} do
       {:ok, _pid} = GameServer.start_game("operator-timeout")
 
