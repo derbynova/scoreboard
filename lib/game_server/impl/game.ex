@@ -1,6 +1,7 @@
 defmodule GameServer.Impl.Game do
   alias GameServer.Impl.Timer
 
+  # WFTDA timing constants (see: https://rules.wftda.com)
   @period_ms 1_800_000
   @lineup_ms 30_000
   @jam_ms 120_000
@@ -133,11 +134,11 @@ defmodule GameServer.Impl.Game do
   def end_game(%{phase: phase}, _now),
     do: {:error, :invalid_transition, :end_game, phase}
 
-  def score(%{phase: phase} = game, :home, points, now) when phase not in [:initial] do
+  def score(%{phase: phase} = game, :home, points, now) when phase == :jam_running do
     %{game | score_home: game.score_home + points} |> return_with_snapshot(now)
   end
 
-  def score(%{phase: phase} = game, :away, points, now) when phase not in [:initial] do
+  def score(%{phase: phase} = game, :away, points, now) when phase == :jam_running do
     %{game | score_away: game.score_away + points} |> return_with_snapshot(now)
   end
 

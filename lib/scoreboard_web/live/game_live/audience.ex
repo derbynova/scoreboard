@@ -23,14 +23,14 @@ defmodule ScoreboardWeb.GameLive.Audience do
   end
 
   @impl true
-  def terminate(_reason, socket) do
-    GameServer.unsubscribe(socket.assigns.game_id)
-    :ok
-  end
+  def handle_info(_msg, socket), do: {:noreply, socket}
 
-  def format_clock(seconds) when is_integer(seconds) do
-    minutes = div(seconds, 60)
-    secs = rem(seconds, 60)
-    :io_lib.format("~2..0B:~2..0B", [minutes, secs]) |> IO.iodata_to_binary()
+  @impl true
+  def terminate(_reason, socket) do
+    if game_id = socket.assigns[:game_id] do
+      GameServer.unsubscribe(game_id)
+    end
+
+    :ok
   end
 end

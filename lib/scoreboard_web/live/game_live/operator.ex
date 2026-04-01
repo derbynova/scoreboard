@@ -22,46 +22,47 @@ defmodule ScoreboardWeb.GameLive.Operator do
     {:noreply, assign(socket, snapshot: snapshot)}
   end
 
+  def handle_info(_msg, socket), do: {:noreply, socket}
+
   @impl true
   def handle_event("start_period", _, socket) do
-    GameServer.start_period(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.start_period(socket.assigns.game_id) end)
   end
 
   def handle_event("start_jam", _, socket) do
-    GameServer.start_jam(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.start_jam(socket.assigns.game_id) end)
   end
 
   def handle_event("end_jam", _, socket) do
-    GameServer.end_jam(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.end_jam(socket.assigns.game_id) end)
   end
 
   def handle_event("call_timeout", _, socket) do
-    GameServer.call_timeout(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.call_timeout(socket.assigns.game_id) end)
   end
 
   def handle_event("end_timeout", _, socket) do
-    GameServer.end_timeout(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.end_timeout(socket.assigns.game_id) end)
   end
 
   def handle_event("end_period", _, socket) do
-    GameServer.end_period(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.end_period(socket.assigns.game_id) end)
   end
 
   def handle_event("end_game", _, socket) do
-    GameServer.end_game(socket.assigns.game_id)
-    {:noreply, socket}
+    safe_game_call(socket, fn -> GameServer.end_game(socket.assigns.game_id) end)
   end
 
   def handle_event("score", %{"team" => team, "points" => points}, socket) do
-    points_int = String.to_integer(points)
-    GameServer.add_score(socket.assigns.game_id, String.to_atom(team), points_int)
-    {:noreply, socket}
+    case Integer.parse(points) do
+      {points_int, ""} when points_int > 0 ->
+        safe_game_call(socket, fn ->
+          GameServer.add_score(socket.assigns.game_id, String.to_existing_atom(team), points_int)
+        end)
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Invalid points value")}
+    end
   end
 
   def handle_event("keydown", %{"key" => key} = params, socket) do
@@ -113,15 +114,27 @@ defmodule ScoreboardWeb.GameLive.Operator do
     socket
   end
 
-  def format_clock(seconds) when is_integer(seconds) do
-    minutes = div(seconds, 60)
-    secs = rem(seconds, 60)
-    :io_lib.format("~2..0B:~2..0B", [minutes, secs]) |> IO.iodata_to_binary()
+  defp safe_game_call(socket, fun) do
+    try do
+      case fun.() do
+        {:ok, _snapshot} ->
+          {:noreply, socket}
+
+        {:error, :invalid_transition, action, phase} ->
+          {:noreply, put_flash(socket, :error, "Cannot #{action} in #{phase} phase")}
+      end
+    catch
+      :exit, _reason ->
+        {:noreply, push_navigate(socket, to: ~p"/")}
+    end
   end
 
   @impl true
   def terminate(_reason, socket) do
-    GameServer.unsubscribe(socket.assigns.game_id)
+    if game_id = socket.assigns[:game_id] do
+      GameServer.unsubscribe(game_id)
+    end
+
     :ok
   end
 end
