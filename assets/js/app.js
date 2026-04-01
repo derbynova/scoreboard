@@ -25,6 +25,23 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/scoreboard"
 import topbar from "../vendor/topbar"
 
+// Intercept keydown events to prevent those from outside the operator view
+document.addEventListener("keydown", (e) => {
+  const operatorView = document.querySelector("#operator-view")
+  // Only block events that originate from outside the operator view
+  // and are not in an input/textarea
+  if (operatorView && !operatorView.contains(e.target)) {
+    const tag = e.target.tagName.toLowerCase()
+    const isInput = tag === "input" || tag === "textarea" || e.target.getAttribute("contenteditable") === "true"
+
+    // If not in an input and the event is from outside operator view,
+    // mark it to be ignored by Phoenix's phx-window-keydown
+    if (!isInput) {
+      e.__phxIgnore = true
+    }
+  }
+}, true) // Capture phase to intercept before Phoenix
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,

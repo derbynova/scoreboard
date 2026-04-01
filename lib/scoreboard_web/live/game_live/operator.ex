@@ -64,41 +64,47 @@ defmodule ScoreboardWeb.GameLive.Operator do
     {:noreply, socket}
   end
 
-  def handle_event("keydown", %{"key" => key, "shiftKey" => shift?}, socket) do
-    socket = handle_key(socket, key, shift?)
+  def handle_event("keydown", %{"key" => key} = params, socket) do
+    # Phoenix doesn't include boolean false values in params, so use Map.get with default
+    shift? = Map.get(params, "shiftKey", false)
+    code = Map.get(params, "code", key)
+    socket = handle_key(socket, key, code, shift?)
     {:noreply, socket}
   end
 
-  defp handle_key(socket, " ", _shift) do
+  # Use 'code' for number keys - it gives the physical key (e.g., "Digit1") regardless of Shift
+  defp handle_key(socket, _key, "Digit" <> digit_str, shift?) do
+    digit = String.to_integer(digit_str)
+
+    if digit in 1..4 do
+      team = if shift?, do: :away, else: :home
+      GameServer.add_score(socket.assigns.game_id, team, digit)
+    end
+
+    socket
+  end
+
+  # Handle key codes for special keys using 'key' property
+  defp handle_key(socket, " ", _code, _shift) do
     phase = socket.assigns.snapshot.phase
     if phase == :lineup, do: GameServer.start_jam(socket.assigns.game_id)
     if phase == :jam_running, do: GameServer.end_jam(socket.assigns.game_id)
     socket
   end
 
-  defp handle_key(socket, "t", false) do
+  defp handle_key(socket, "t", _code, false) do
     GameServer.call_timeout(socket.assigns.game_id)
     socket
   end
 
-  defp handle_key(socket, "e", false) do
+  defp handle_key(socket, "e", _code, false) do
     phase = socket.assigns.snapshot.phase
     if phase == :timeout, do: GameServer.end_timeout(socket.assigns.game_id)
     if phase == :jam_running or phase == :lineup, do: maybe_end(socket)
     socket
   end
 
-  defp handle_key(socket, <<digit::8>>, false) when digit in ?1..?4 do
-    GameServer.add_score(socket.assigns.game_id, :home, digit - ?0)
-    socket
-  end
-
-  defp handle_key(socket, <<digit::8>>, true) when digit in ?1..?4 do
-    GameServer.add_score(socket.assigns.game_id, :away, digit - ?0)
-    socket
-  end
-
-  defp handle_key(socket, _key, _shift), do: socket
+  defp handle_key(socket, _key, _code, _shift), do: socket
 
   defp maybe_end(socket) do
     %{snapshot: %{period: period}} = socket.assigns
