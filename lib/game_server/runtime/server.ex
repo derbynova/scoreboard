@@ -175,6 +175,8 @@ defmodule GameServer.Runtime.Server do
   defp snapshot_changed?(nil, _new), do: true
 
   defp snapshot_changed?(old, new) do
+    # Running state conditions are defensive guards for potential future state changes
+    # that might toggle running without changing phase
     old.period_clock_s != new.period_clock_s or
       old.lineup_clock_s != new.lineup_clock_s or
       old.jam_clock_s != new.jam_clock_s or
@@ -183,8 +185,8 @@ defmodule GameServer.Runtime.Server do
       old.score_home != new.score_home or
       old.score_away != new.score_away or
       old.period_clock_running != new.period_clock_running or
-      old.jam_clock_running != new.jam_clock_running or
       old.lineup_clock_running != new.lineup_clock_running or
+      old.jam_clock_running != new.jam_clock_running or
       old.timeout_clock_running != new.timeout_clock_running
   end
 
