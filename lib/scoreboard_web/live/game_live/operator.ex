@@ -3,13 +3,17 @@ defmodule ScoreboardWeb.GameLive.Operator do
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
-    case GameServer.snapshot(game_id) do
-      {:ok, snapshot} ->
-        GameServer.subscribe(game_id)
-        {:ok, assign(socket, game_id: game_id, snapshot: snapshot)}
+    try do
+      case GameServer.snapshot(game_id) do
+        {:ok, snapshot} ->
+          GameServer.subscribe(game_id)
+          {:ok, assign(socket, game_id: game_id, snapshot: snapshot)}
 
-      {:error, _reason} ->
-        {:ok, push_navigate(socket, to: ~p"/")}
+        {:error, _reason} ->
+          {:ok, push_navigate(socket, to: ~p"/")}
+      end
+    catch
+      :exit, _ -> {:ok, push_navigate(socket, to: ~p"/")}
     end
   end
 
@@ -55,7 +59,8 @@ defmodule ScoreboardWeb.GameLive.Operator do
   end
 
   def handle_event("score", %{"team" => team, "points" => points}, socket) do
-    GameServer.add_score(socket.assigns.game_id, String.to_atom(team), points)
+    points_int = String.to_integer(points)
+    GameServer.add_score(socket.assigns.game_id, String.to_atom(team), points_int)
     {:noreply, socket}
   end
 

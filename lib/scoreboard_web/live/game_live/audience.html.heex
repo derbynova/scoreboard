@@ -1,56 +1,74 @@
-<div class="scoreboard-audience min-h-screen flex flex-col items-center justify-center select-none" style="background:#0f0f1a;color:#fff;font-family:'Courier New',monospace">
+<div
+  class="scoreboard-audience min-h-screen flex flex-col items-center justify-center select-none"
+  style="background:#0f0f1a;color:#fff;font-family:'Courier New',monospace"
+>
   <div class="text-center text-sm tracking-widest opacity-60 mb-5">
-    PERIOD <span class="text-lg text-white/100"><%= @snapshot.period %></span>
+    PERIOD <span class="text-lg text-white/100">{@snapshot.period}</span>
     <span class="mx-2">|</span>
-    JAM <span class="text-lg text-white/100"><%= @snapshot.jam_number %></span>
+    JAM <span class="text-lg text-white/100">{@snapshot.jam_number}</span>
   </div>
 
   <div class="flex items-center justify-center gap-14">
     <!-- Home -->
     <div class="text-center flex-1 max-w-[260px]">
       <div class="text-sm tracking-[3px] opacity-60 mb-1.5">HOME</div>
-      <div class="text-[80px] font-black leading-none" style="color:#e94560"><%= @snapshot.score_home %></div>
+      <div class="text-[80px] font-black leading-none" style="color:#e94560">
+        {@snapshot.score_home}
+      </div>
     </div>
-
-    <!-- Clocks -->
+    
+<!-- Clocks -->
     <div class="text-center min-w-[200px]">
       <!-- Period clock -->
       <div class="mb-5">
         <div class="text-[10px] tracking-[2px] opacity-40 mb-0.5">PERIOD</div>
-        <div class="text-[36px] font-bold leading-none"><%= format_clock(@snapshot.period_clock_s) %></div>
+        <div class="text-[36px] font-bold leading-none">
+          {format_clock(@snapshot.period_clock_s)}
+        </div>
       </div>
-
-      <!-- Active phase clock -->
+      
+<!-- Active phase clock -->
       <div :if={@snapshot.jam_clock_running}>
         <div class="text-[10px] tracking-[2px] opacity-40 mb-0.5">JAM CLOCK</div>
-        <div class="text-[56px] font-bold leading-none" style="color:#ffd700"><%= format_clock(@snapshot.jam_clock_s) %></div>
+        <div class="text-[56px] font-bold leading-none" style="color:#ffd700">
+          {format_clock(@snapshot.jam_clock_s)}
+        </div>
       </div>
 
       <div :if={@snapshot.lineup_clock_running}>
         <div class="text-[10px] tracking-[2px] opacity-40 mb-0.5">LINEUP</div>
-        <div class="text-[56px] font-bold leading-none" style="color:#22d3ee"><%= format_clock(@snapshot.lineup_clock_s) %></div>
+        <div class="text-[56px] font-bold leading-none" style="color:#22d3ee">
+          {format_clock(@snapshot.lineup_clock_s)}
+        </div>
       </div>
 
       <div :if={@snapshot.timeout_clock_running}>
         <div class="text-[10px] tracking-[2px] opacity-40 mb-0.5">TIMEOUT</div>
-        <div class="text-[56px] font-bold leading-none" style="color:#f87171"><%= format_clock(@snapshot.timeout_clock_s) %></div>
+        <div class="text-[56px] font-bold leading-none" style="color:#f87171">
+          {format_clock(@snapshot.timeout_clock_s)}
+        </div>
       </div>
 
-      <div :if={!@snapshot.jam_clock_running and !@snapshot.lineup_clock_running and !@snapshot.timeout_clock_running}>
+      <div :if={
+        !@snapshot.jam_clock_running and !@snapshot.lineup_clock_running and
+          !@snapshot.timeout_clock_running
+      }>
         <div class="text-[56px] font-bold leading-none opacity-20">--:--</div>
       </div>
     </div>
-
-    <!-- Away -->
+    
+<!-- Away -->
     <div class="text-center flex-1 max-w-[260px]">
       <div class="text-sm tracking-[3px] opacity-60 mb-1.5">AWAY</div>
-      <div class="text-[80px] font-black leading-none" style="color:#4ea8de"><%= @snapshot.score_away %></div>
+      <div class="text-[80px] font-black leading-none" style="color:#4ea8de">
+        {@snapshot.score_away}
+      </div>
     </div>
   </div>
-
-  <!-- Inactive clocks -->
+  
+<!-- Inactive clocks -->
   <div class="text-center text-xs opacity-30 mt-5 flex gap-4">
-    <span :if={!@snapshot.jam_clock_running}>JAM <%= format_clock(@snapshot.jam_clock_s) %></span>
+    <span :if={!@snapshot.jam_clock_running}>JAM {format_clock(@snapshot.jam_clock_s)}</span>
     <span :if={!@snapshot.lineup_clock_running}>LINEUP</span>
     <span :if={!@snapshot.timeout_clock_running}>TIMEOUT</span>
   </div>

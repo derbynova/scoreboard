@@ -4,30 +4,40 @@
     <div class="flex items-center justify-center gap-6 text-center">
       <div class="flex-1">
         <div class="text-xs tracking-widest opacity-60">HOME</div>
-        <div class="text-4xl font-bold" style="color:#e94560"><%= @snapshot.score_home %></div>
+        <div class="text-4xl font-bold" style="color:#e94560">{@snapshot.score_home}</div>
       </div>
       <div class="min-w-[120px]">
-        <div class="text-xs opacity-50">P<%= @snapshot.period %> | J<%= @snapshot.jam_number %></div>
-        <div class="text-2xl font-bold"><%= format_clock(@snapshot.period_clock_s) %></div>
-        <div :if={@snapshot.jam_clock_running} class="text-xl font-bold text-warning"><%= format_clock(@snapshot.jam_clock_s) %></div>
-        <div :if={@snapshot.lineup_clock_running} class="text-xl font-bold text-info"><%= format_clock(@snapshot.lineup_clock_s) %></div>
-        <div :if={@snapshot.timeout_clock_running} class="text-xl font-bold text-error"><%= format_clock(@snapshot.timeout_clock_s) %></div>
+        <div class="text-xs opacity-50">P{@snapshot.period} | J{@snapshot.jam_number}</div>
+        <div class="text-2xl font-bold">{format_clock(@snapshot.period_clock_s)}</div>
+        <div :if={@snapshot.jam_clock_running} class="text-xl font-bold text-warning">
+          {format_clock(@snapshot.jam_clock_s)}
+        </div>
+        <div :if={@snapshot.lineup_clock_running} class="text-xl font-bold text-info">
+          {format_clock(@snapshot.lineup_clock_s)}
+        </div>
+        <div :if={@snapshot.timeout_clock_running} class="text-xl font-bold text-error">
+          {format_clock(@snapshot.timeout_clock_s)}
+        </div>
       </div>
       <div class="flex-1">
         <div class="text-xs tracking-widest opacity-60">AWAY</div>
-        <div class="text-4xl font-bold" style="color:#4ea8de"><%= @snapshot.score_away %></div>
+        <div class="text-4xl font-bold" style="color:#4ea8de">{@snapshot.score_away}</div>
       </div>
     </div>
   </div>
-
-  <!-- Audience display link -->
+  
+<!-- Audience display link -->
   <div class="text-center mb-6">
-    <.link href={~p"/games/#{@game_id}/scoreboard"} target="_blank" class="link link-primary text-sm">
+    <.link
+      href={~p"/games/#{@game_id}/scoreboard"}
+      target="_blank"
+      class="link link-primary text-sm"
+    >
       Open Audience Display
     </.link>
   </div>
-
-  <!-- Controls -->
+  
+<!-- Controls -->
   <div class="space-y-4">
     <!-- Phase controls -->
     <div :if={@snapshot.phase == :initial} class="flex justify-center">
@@ -35,45 +45,79 @@
     </div>
 
     <div :if={@snapshot.phase == :lineup} class="flex justify-center gap-3">
-      <.button phx-click="start_jam" class="btn-lg btn-primary">Start Jam <kbd class="kbd kbd-sm ml-1">Space</kbd></.button>
-      <.button phx-click="call_timeout" class="btn-lg btn-warning">Timeout <kbd class="kbd kbd-sm ml-1">T</kbd></.button>
-      <.button :if={@snapshot.period == 1} phx-click="end_period" class="btn-lg btn-error">End Period <kbd class="kbd kbd-sm ml-1">E</kbd></.button>
-      <.button :if={@snapshot.period == 2} phx-click="end_game" class="btn-lg btn-error">End Game <kbd class="kbd kbd-sm ml-1">E</kbd></.button>
+      <.button phx-click="start_jam" class="btn-lg btn-primary">
+        Start Jam <kbd class="kbd kbd-sm ml-1">Space</kbd>
+      </.button>
+      <.button phx-click="call_timeout" class="btn-lg btn-warning">
+        Timeout <kbd class="kbd kbd-sm ml-1">T</kbd>
+      </.button>
+      <.button :if={@snapshot.period == 1} phx-click="end_period" class="btn-lg btn-error">
+        End Period <kbd class="kbd kbd-sm ml-1">E</kbd>
+      </.button>
+      <.button :if={@snapshot.period == 2} phx-click="end_game" class="btn-lg btn-error">
+        End Game <kbd class="kbd kbd-sm ml-1">E</kbd>
+      </.button>
     </div>
 
     <div :if={@snapshot.phase == :jam_running} class="space-y-4">
       <div class="flex justify-center gap-3">
-        <.button phx-click="end_jam" class="btn-lg btn-error">End Jam <kbd class="kbd kbd-sm ml-1">Space</kbd></.button>
-        <.button phx-click="call_timeout" class="btn-lg btn-warning">Timeout <kbd class="kbd kbd-sm ml-1">T</kbd></.button>
+        <.button phx-click="end_jam" class="btn-lg btn-error">
+          End Jam <kbd class="kbd kbd-sm ml-1">Space</kbd>
+        </.button>
+        <.button phx-click="call_timeout" class="btn-lg btn-warning">
+          Timeout <kbd class="kbd kbd-sm ml-1">T</kbd>
+        </.button>
       </div>
-
-      <!-- Score buttons -->
+      
+<!-- Score buttons -->
       <div class="flex justify-center gap-8">
         <div class="text-center">
           <div class="text-xs tracking-widest opacity-60 mb-2">HOME SCORE</div>
           <div class="flex gap-1">
-            <.button phx-click="score" phx-value-team="home" phx-value-points="-1" class="btn-sm">-1</.button>
-            <.button phx-click="score" phx-value-team="home" phx-value-points="1" class="btn-sm">+1 <kbd class="kbd kbd-xs">1</kbd></.button>
-            <.button phx-click="score" phx-value-team="home" phx-value-points="2" class="btn-sm">+2 <kbd class="kbd kbd-xs">2</kbd></.button>
-            <.button phx-click="score" phx-value-team="home" phx-value-points="3" class="btn-sm">+3 <kbd class="kbd kbd-xs">3</kbd></.button>
-            <.button phx-click="score" phx-value-team="home" phx-value-points="4" class="btn-sm">+4 <kbd class="kbd kbd-xs">4</kbd></.button>
+            <.button phx-click="score" phx-value-team="home" phx-value-points="-1" class="btn-sm">
+              -1
+            </.button>
+            <.button phx-click="score" phx-value-team="home" phx-value-points="1" class="btn-sm">
+              +1 <kbd class="kbd kbd-xs">1</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="home" phx-value-points="2" class="btn-sm">
+              +2 <kbd class="kbd kbd-xs">2</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="home" phx-value-points="3" class="btn-sm">
+              +3 <kbd class="kbd kbd-xs">3</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="home" phx-value-points="4" class="btn-sm">
+              +4 <kbd class="kbd kbd-xs">4</kbd>
+            </.button>
           </div>
         </div>
         <div class="text-center">
           <div class="text-xs tracking-widest opacity-60 mb-2">AWAY SCORE</div>
           <div class="flex gap-1">
-            <.button phx-click="score" phx-value-team="away" phx-value-points="-1" class="btn-sm">-1</.button>
-            <.button phx-click="score" phx-value-team="away" phx-value-points="1" class="btn-sm">+1 <kbd class="kbd kbd-xs">⇧1</kbd></.button>
-            <.button phx-click="score" phx-value-team="away" phx-value-points="2" class="btn-sm">+2 <kbd class="kbd kbd-xs">⇧2</kbd></.button>
-            <.button phx-click="score" phx-value-team="away" phx-value-points="3" class="btn-sm">+3 <kbd class="kbd kbd-xs">⇧3</kbd></.button>
-            <.button phx-click="score" phx-value-team="away" phx-value-points="4" class="btn-sm">+4 <kbd class="kbd kbd-xs">⇧4</kbd></.button>
+            <.button phx-click="score" phx-value-team="away" phx-value-points="-1" class="btn-sm">
+              -1
+            </.button>
+            <.button phx-click="score" phx-value-team="away" phx-value-points="1" class="btn-sm">
+              +1 <kbd class="kbd kbd-xs">⇧1</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="away" phx-value-points="2" class="btn-sm">
+              +2 <kbd class="kbd kbd-xs">⇧2</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="away" phx-value-points="3" class="btn-sm">
+              +3 <kbd class="kbd kbd-xs">⇧3</kbd>
+            </.button>
+            <.button phx-click="score" phx-value-team="away" phx-value-points="4" class="btn-sm">
+              +4 <kbd class="kbd kbd-xs">⇧4</kbd>
+            </.button>
           </div>
         </div>
       </div>
     </div>
 
     <div :if={@snapshot.phase == :timeout} class="flex justify-center gap-3">
-      <.button phx-click="end_timeout" class="btn-lg btn-primary">End Timeout <kbd class="kbd kbd-sm ml-1">E</kbd></.button>
+      <.button phx-click="end_timeout" class="btn-lg btn-primary">
+        End Timeout <kbd class="kbd kbd-sm ml-1">E</kbd>
+      </.button>
     </div>
 
     <div :if={@snapshot.phase == :halftime} class="flex justify-center">
