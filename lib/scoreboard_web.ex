@@ -86,6 +86,7 @@ defmodule ScoreboardWeb do
       import Phoenix.HTML
       # Core UI components
       import ScoreboardWeb.CoreComponents
+      import ScoreboardWeb.Helpers.Clock
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

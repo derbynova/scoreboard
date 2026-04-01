@@ -4,6 +4,11 @@ defmodule ScoreboardWeb.GameLiveTest do
   import Phoenix.LiveViewTest
 
   setup do
+    # Clean up any leftover game processes from previous tests
+    for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
+      DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)
+    end
+
     on_exit(fn ->
       for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
         DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)

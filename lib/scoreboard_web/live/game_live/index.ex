@@ -21,11 +21,16 @@ defmodule ScoreboardWeb.GameLive.Index do
 
   @impl true
   def handle_event("join_game", %{"game_id" => game_id}, socket) do
-    case GameServer.snapshot(game_id) do
-      {:ok, _snapshot} ->
-        {:noreply, push_navigate(socket, to: ~p"/games/#{game_id}/scoreboard")}
+    try do
+      case GameServer.snapshot(game_id) do
+        {:ok, _snapshot} ->
+          {:noreply, push_navigate(socket, to: ~p"/games/#{game_id}/scoreboard")}
 
-      {:error, _reason} ->
+        {:error, _reason} ->
+          {:noreply, put_flash(socket, :error, "Game not found")}
+      end
+    catch
+      :exit, _ ->
         {:noreply, put_flash(socket, :error, "Game not found")}
     end
   end
