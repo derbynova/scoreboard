@@ -284,6 +284,33 @@ defmodule GameServer.Impl.GameTest do
       assert snap.timeout_clock_running
     end
 
+    test "lineup clock running, jam clock stopped after end_jam" do
+      {_game, snap} =
+        Game.new("g1")
+        |> Game.start_period(0)
+        |> then(fn {g, _} -> Game.start_jam(g, 1000) end)
+        |> then(fn {g, _} -> Game.end_jam(g, 120_000) end)
+
+      assert snap.period_clock_running
+      assert snap.lineup_clock_running
+      refute snap.jam_clock_running
+      refute snap.timeout_clock_running
+    end
+
+    test "period and lineup clocks running after end_timeout" do
+      {_game, snap} =
+        Game.new("g1")
+        |> Game.start_period(0)
+        |> then(fn {g, _} -> Game.start_jam(g, 1000) end)
+        |> then(fn {g, _} -> Game.call_timeout(g, 5000) end)
+        |> then(fn {g, _} -> Game.end_timeout(g, 65_000) end)
+
+      assert snap.period_clock_running
+      assert snap.lineup_clock_running
+      refute snap.jam_clock_running
+      refute snap.timeout_clock_running
+    end
+
     test "no clocks running in final state" do
       {_game, snap} =
         Game.new("g1")
@@ -301,7 +328,7 @@ defmodule GameServer.Impl.GameTest do
     end
 
     test "clocks count down in seconds" do
-      game = Game.new("g1") |> then(fn g -> {g, _} = Game.start_period(g, 0); g end)
+      game = in_lineup("g1")
 
       snap = Game.snapshot(game, 10_000)
       assert snap.period_clock_s == 1790
