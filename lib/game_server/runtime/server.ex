@@ -181,7 +181,11 @@ defmodule GameServer.Runtime.Server do
       old.timeout_clock_s != new.timeout_clock_s or
       old.phase != new.phase or
       old.score_home != new.score_home or
-      old.score_away != new.score_away
+      old.score_away != new.score_away or
+      old.period_clock_running != new.period_clock_running or
+      old.jam_clock_running != new.jam_clock_running or
+      old.lineup_clock_running != new.lineup_clock_running or
+      old.timeout_clock_running != new.timeout_clock_running
   end
 
   defp active_phases, do: [:lineup, :jam_running, :timeout]

@@ -233,17 +233,75 @@ defmodule GameServer.Impl.GameTest do
   end
 
   describe "snapshot/2" do
-    test "returns map with all expected keys" do
+    test "returns map with all expected keys including running states" do
       game = Game.new("g1")
       snap = Game.snapshot(game, 0)
 
       assert Map.keys(snap) |> Enum.sort() ==
-               ~w[jam_number period phase score_away score_home
-                 period_clock_s lineup_clock_s jam_clock_s timeout_clock_s]a |> Enum.sort()
+               ~w[jam_clock_running jam_number lineup_clock_running period period_clock_running
+                phase score_away score_home timeout_clock_running
+                period_clock_s lineup_clock_s jam_clock_s timeout_clock_s]a |> Enum.sort()
+    end
+
+    test "clocks are not running in initial state" do
+      snap = Game.new("g1") |> Game.snapshot(0)
+
+      refute snap.period_clock_running
+      refute snap.jam_clock_running
+      refute snap.lineup_clock_running
+      refute snap.timeout_clock_running
+    end
+
+    test "period and lineup clocks running after start_period" do
+      {_game, snap} = Game.new("g1") |> Game.start_period(0)
+
+      assert snap.period_clock_running
+      assert snap.lineup_clock_running
+      refute snap.jam_clock_running
+      refute snap.timeout_clock_running
+    end
+
+    test "period and jam clocks running after start_jam" do
+      {_game, snap} =
+        Game.new("g1") |> Game.start_period(0) |> then(fn {g, _} -> Game.start_jam(g, 1000) end)
+
+      assert snap.period_clock_running
+      assert snap.jam_clock_running
+      refute snap.lineup_clock_running
+      refute snap.timeout_clock_running
+    end
+
+    test "only timeout clock running during timeout" do
+      {_game, snap} =
+        Game.new("g1")
+        |> Game.start_period(0)
+        |> then(fn {g, _} -> Game.start_jam(g, 1000) end)
+        |> then(fn {g, _} -> Game.call_timeout(g, 5000) end)
+
+      refute snap.period_clock_running
+      refute snap.jam_clock_running
+      refute snap.lineup_clock_running
+      assert snap.timeout_clock_running
+    end
+
+    test "no clocks running in final state" do
+      {_game, snap} =
+        Game.new("g1")
+        |> Game.start_period(0)
+        |> then(fn {g, _} -> Game.start_jam(g, 1000) end)
+        |> then(fn {g, _} -> Game.end_period(g, 1_800_000) end)
+        |> then(fn {g, _} -> Game.start_period(g, 2_400_000) end)
+        |> then(fn {g, _} -> Game.start_jam(g, 2_401_000) end)
+        |> then(fn {g, _} -> Game.end_game(g, 5_000_000) end)
+
+      refute snap.period_clock_running
+      refute snap.jam_clock_running
+      refute snap.lineup_clock_running
+      refute snap.timeout_clock_running
     end
 
     test "clocks count down in seconds" do
-      game = in_lineup("g1")
+      game = Game.new("g1") |> then(fn g -> {g, _} = Game.start_period(g, 0); g end)
 
       snap = Game.snapshot(game, 10_000)
       assert snap.period_clock_s == 1790
@@ -288,7 +346,7 @@ defmodule GameServer.Impl.GameTest do
       {game, snap} = Game.start_jam(game, t0 + 2_401_000)
       assert snap.jam_number == 3
 
-      {_game, snap} = Game.end_jam(game, t0 + 2_521_000)
+      {game, _snap} = Game.end_jam(game, t0 + 2_521_000)
 
       {_game, snap} = Game.end_game(game, t0 + 3_600_000)
       assert snap.phase == :final

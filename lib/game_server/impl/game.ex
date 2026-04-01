@@ -154,7 +154,11 @@ defmodule GameServer.Impl.Game do
       period_clock_s: Timer.remaining(game.period_clock, now) |> div(1000),
       lineup_clock_s: Timer.remaining(game.lineup_clock, now) |> div(1000),
       jam_clock_s: Timer.remaining(game.jam_clock, now) |> div(1000),
-      timeout_clock_s: Timer.remaining(game.timeout_clock, now) |> div(1000)
+      timeout_clock_s: Timer.remaining(game.timeout_clock, now) |> div(1000),
+      period_clock_running: game.period_clock.running,
+      jam_clock_running: game.jam_clock.running,
+      lineup_clock_running: game.lineup_clock.running,
+      timeout_clock_running: game.timeout_clock.running
     }
   end
 
