@@ -40,7 +40,8 @@ defmodule ScoreboardWeb.GameLiveTest do
 
       # Check initial state rendering
       assert render(view) =~ "Start Period 1"
-      assert render(view) =~ "0"  # scores are 0
+      # scores are 0
+      assert render(view) =~ "0"
     end
 
     test "start period shows lineup controls", %{conn: conn} do
@@ -81,8 +82,10 @@ defmodule ScoreboardWeb.GameLiveTest do
       render_click(view, :score, %{"team" => "home", "points" => "3"})
       render_click(view, :score, %{"team" => "away", "points" => "2"})
       :timer.sleep(150)
-      assert render(view) =~ "3"  # Home score
-      assert render(view) =~ "2"  # Away score
+      # Home score
+      assert render(view) =~ "3"
+      # Away score
+      assert render(view) =~ "2"
 
       # 4. End jam
       render_click(view, :end_jam)
@@ -162,7 +165,8 @@ defmodule ScoreboardWeb.GameLiveTest do
 
     test "redirects to index for unknown game", %{conn: conn} do
       # When game doesn't exist, mount returns a live_redirect
-      assert {:error, {:live_redirect, %{to: "/"}}} = live(conn, ~p"/games/unknown-game/scoreboard")
+      assert {:error, {:live_redirect, %{to: "/"}}} =
+               live(conn, ~p"/games/unknown-game/scoreboard")
     end
 
     test "updates when game state changes", %{conn: conn} do
@@ -171,14 +175,16 @@ defmodule ScoreboardWeb.GameLiveTest do
       {:ok, view, _html} = live(conn, ~p"/games/audience-update/scoreboard")
 
       # Initial state
-      assert render(view) =~ "0"  # Initial scores
+      # Initial scores
+      assert render(view) =~ "0"
 
       # Start period
       GameServer.start_period("audience-update")
       :timer.sleep(150)
 
       html = render(view)
-      assert html =~ "LINEUP"  # Lineup clock should be shown
+      # Lineup clock should be shown
+      assert html =~ "LINEUP"
 
       # Start jam and add score
       GameServer.start_jam("audience-update")
@@ -186,8 +192,10 @@ defmodule ScoreboardWeb.GameLiveTest do
       :timer.sleep(150)
 
       html = render(view)
-      assert html =~ "5"  # Updated home score
-      assert html =~ "JAM CLOCK"  # Jam clock should be shown
+      # Updated home score
+      assert html =~ "5"
+      # Jam clock should be shown
+      assert html =~ "JAM CLOCK"
     end
   end
 end
