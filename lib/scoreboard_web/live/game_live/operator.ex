@@ -55,7 +55,7 @@ defmodule ScoreboardWeb.GameLive.Operator do
 
   def handle_event("score", %{"team" => team, "points" => points}, socket) do
     case Integer.parse(points) do
-      {points_int, ""} when points_int > 0 ->
+      {points_int, ""} when points_int != 0 ->
         safe_game_call(socket, fn ->
           GameServer.add_score(socket.assigns.game_id, String.to_existing_atom(team), points_int)
         end)
