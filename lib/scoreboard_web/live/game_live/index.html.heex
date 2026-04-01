@@ -1,0 +1,25 @@
+<div class="min-h-screen flex items-center justify-center">
+  <div class="text-center space-y-8">
+    <h1 class="text-4xl font-bold">DerbyNova Scoreboard</h1>
+    <p class="text-base-content/70">Create a new game or join an existing one.</p>
+
+    <div class="space-y-4">
+      <.button phx-click="create_game" class="btn-primary btn-lg w-full">
+        New Game
+      </.button>
+
+      <div class="divider">OR</div>
+
+      <.form for={%{}} phx-submit="join_game" class="flex gap-2">
+        <input
+          type="text"
+          name="game_id"
+          placeholder="Enter game ID"
+          class="input input-bordered flex-1"
+          required
+        />
+        <.button type="submit">Join Game</.button>
+      </.form>
+    </div>
+  </div>
+</div>
