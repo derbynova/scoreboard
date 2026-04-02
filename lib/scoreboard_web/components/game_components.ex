@@ -150,7 +150,7 @@ defmodule ScoreboardWeb.GameComponents do
     <div class="grid grid-cols-3 items-center bg-base-200">
       <.team_display
         name="Home"
-        score={@snapshot.home_score}
+        score={@snapshot.score_home}
         label_color="text-red-400"
         dot_color="bg-red-500"
         to_used={0}
@@ -164,7 +164,7 @@ defmodule ScoreboardWeb.GameComponents do
       />
       <.team_display
         name="Away"
-        score={@snapshot.away_score}
+        score={@snapshot.score_away}
         label_color="text-blue-400"
         dot_color="bg-blue-500"
         to_used={0}

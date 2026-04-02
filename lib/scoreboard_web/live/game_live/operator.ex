@@ -1,5 +1,6 @@
 defmodule ScoreboardWeb.GameLive.Operator do
   use ScoreboardWeb, :live_view
+  import ScoreboardWeb.GameComponents
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
