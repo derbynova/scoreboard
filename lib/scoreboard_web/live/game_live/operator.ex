@@ -42,6 +42,10 @@ defmodule ScoreboardWeb.GameLive.Operator do
     safe_game_call(socket, fn -> GameServer.call_timeout(socket.assigns.game_id) end)
   end
 
+  def handle_event("call_or", _, socket) do
+    {:noreply, put_flash(socket, :info, "Official Review not yet implemented")}
+  end
+
   def handle_event("end_timeout", _, socket) do
     safe_game_call(socket, fn -> GameServer.end_timeout(socket.assigns.game_id) end)
   end
