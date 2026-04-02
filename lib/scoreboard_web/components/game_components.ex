@@ -1,4 +1,11 @@
 defmodule ScoreboardWeb.GameComponents do
+  @moduledoc """
+  Game-specific UI components for the DerbyNova scoreboard operator view.
+
+  Provides reusable function components for displaying game state (TopBar, GameBanner)
+  and controls (ControlPanel, ScoreControls, TeamActions). Components are designed
+  for reuse across operator, audience, and overlay views.
+  """
   use Phoenix.Component
   use Gettext, backend: ScoreboardWeb.Gettext
   alias ScoreboardWeb.Helpers.Clock
