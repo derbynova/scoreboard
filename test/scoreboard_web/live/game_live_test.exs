@@ -45,8 +45,9 @@ defmodule ScoreboardWeb.GameLiveTest do
 
       # Check initial state rendering
       assert render(view) =~ "Start Period 1"
-      # scores are 0
-      assert render(view) =~ "0"
+      # Check team labels instead of generic score labels
+      assert render(view) =~ "Home"
+      assert render(view) =~ "Away"
     end
 
     test "start period shows lineup controls", %{conn: conn} do
@@ -62,8 +63,7 @@ defmodule ScoreboardWeb.GameLiveTest do
 
       # Should show lineup controls
       assert render(view) =~ "Start Jam"
-      assert render(view) =~ "Timeout"
-      assert render(view) =~ "End Period"
+      assert render(view) =~ "TO"
     end
 
     test "full game lifecycle via buttons", %{conn: conn} do
@@ -80,8 +80,6 @@ defmodule ScoreboardWeb.GameLiveTest do
       render_click(view, :start_jam)
       :timer.sleep(150)
       assert render(view) =~ "End Jam"
-      assert render(view) =~ "HOME SCORE"
-      assert render(view) =~ "AWAY SCORE"
 
       # 3. Add scores
       render_click(view, :score, %{"team" => "home", "points" => "3"})
@@ -97,8 +95,8 @@ defmodule ScoreboardWeb.GameLiveTest do
       :timer.sleep(150)
       assert render(view) =~ "Start Jam"
 
-      # 5. End period 1
-      render_click(view, :end_period)
+      # 5. End period 1 (via keyboard 'e' in lineup)
+      render_hook(view, "keydown", %{"key" => "e", "code" => "KeyE"})
       :timer.sleep(150)
       assert render(view) =~ "Start Period 2"
 
@@ -107,8 +105,13 @@ defmodule ScoreboardWeb.GameLiveTest do
       :timer.sleep(150)
       assert render(view) =~ "Start Jam"
 
-      # 7. End game
-      render_click(view, :end_game)
+      # 7. Start jam to be in jam_running phase
+      render_click(view, :start_jam)
+      :timer.sleep(150)
+      assert render(view) =~ "End Jam"
+
+      # 8. End game (via keyboard 'e' in jam_running, P2)
+      render_hook(view, "keydown", %{"key" => "e", "code" => "KeyE"})
       :timer.sleep(150)
       assert render(view) =~ "Game Over"
     end
@@ -321,18 +324,43 @@ defmodule ScoreboardWeb.GameLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/games/operator-final/operator")
 
-      # Navigate to final state
+      # Navigate to final state using keyboard shortcuts
       render_click(view, :start_period)
       :timer.sleep(150)
-      render_click(view, :end_period)
+      # End period 1 via keyboard 'e' in lineup
+      render_hook(view, "keydown", %{"key" => "e", "code" => "KeyE"})
       :timer.sleep(150)
       render_click(view, :start_period)
       :timer.sleep(150)
-      render_click(view, :end_game)
+      # Start jam to be in jam_running phase
+      render_click(view, :start_jam)
+      :timer.sleep(150)
+      # End game via keyboard 'e' in jam_running, P2
+      render_hook(view, "keydown", %{"key" => "e", "code" => "KeyE"})
       :timer.sleep(150)
 
       assert render(view) =~ "Game Over"
       refute render(view) =~ "Start Jam"
+    end
+
+    test "score buttons are always visible regardless of phase", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("operator-score-always")
+      {:ok, view, _html} = live(conn, ~p"/games/operator-score-always/operator")
+
+      # Score buttons visible in initial phase
+      html = render(view)
+      assert html =~ "+1"
+      assert html =~ "+4"
+
+      # Score buttons visible in lineup
+      render_click(view, :start_period)
+      :timer.sleep(150)
+      assert render(view) =~ "+1"
+
+      # Score buttons visible in jam
+      render_click(view, :start_jam)
+      :timer.sleep(150)
+      assert render(view) =~ "+1"
     end
   end
 
