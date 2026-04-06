@@ -2,24 +2,24 @@
   class="audience-display fixed inset-0 flex flex-col select-none overflow-hidden"
   style="background:#0a0a1a;color:#fff;font-family:'Courier New',monospace"
 >
-  <!-- Header bar -->
+  <%!-- Header bar --%>
   <header
     class="flex justify-between items-center px-6 py-2"
     style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.1)"
   >
-    <span class="text-xs tracking-[3px] opacity-50">
+    <span class="text-xs tracking-[3px] opacity-50 tabular-nums">
       PERIOD <span class="text-base text-white font-bold">{@snapshot.period}</span>
       <span class="mx-2 opacity-40">|</span>
       JAM <span class="text-base text-white font-bold">{@snapshot.jam_number}</span>
     </span>
     <span class="text-[10px] opacity-20 hidden md:block">F11 for fullscreen</span>
   </header>
-  
-<!-- Main scoreboard: 7 equal columns [ ] [Home] [ ] [Clocks] [ ] [Away] [ ] -->
-  <main class="flex-1 grid grid-cols-7 items-center">
-    <!-- col 1: spacer -->
 
-    <!-- col 2: HOME -->
+  <%!-- Main scoreboard: 7 equal columns [ ] [Home] [ ] [Clocks] [ ] [Away] [ ] --%>
+  <main class="flex-1 grid grid-cols-7 items-center">
+    <%!-- col 1: spacer --%>
+
+    <%!-- col 2: HOME --%>
     <div class="flex flex-col items-center gap-1">
       <div
         class="text-sm tracking-[4px] uppercase opacity-70"
@@ -37,15 +37,14 @@
       <div class="flex gap-2 items-center mt-1 min-h-[28px]">
         <span
           :if={Map.get(@snapshot, :lead_home, false)}
-          class="audience-lead text-2xl"
-          style="color:#ffd700;filter:drop-shadow(0 0 8px #ffd700)"
+          class="audience-lead text-2xl text-yellow-400"
+          style="filter:drop-shadow(0 0 8px #ffd700)"
         >
           &#9733;
         </span>
         <span
           :if={Map.get(@snapshot, :star_pass_home, false)}
-          class="text-xs font-black px-1.5 py-0.5 rounded"
-          style="color:#22d3ee;background:rgba(34,211,238,0.15);border:1px solid rgba(34,211,238,0.4);letter-spacing:2px"
+          class="text-xs font-black px-1.5 py-0.5 rounded text-cyan-400 border border-cyan-400/40 bg-cyan-400/15 tracking-[2px]"
         >
           SP
         </span>
@@ -54,44 +53,35 @@
         Jam: <span class="text-white/70">{Map.get(@snapshot, :jam_score_home, 0)}</span>
       </div>
     </div>
-    
-<!-- col 3: spacer -->
 
-    <!-- col 4: CLOCKS -->
+    <%!-- col 3: spacer --%>
+
+    <%!-- col 4: CLOCKS --%>
     <div class="flex flex-col items-center gap-2">
-      <!-- Active phase clock -->
+      <%!-- Active phase clock --%>
       <div :if={@snapshot.jam_clock_running} class="text-center">
-        <div class="text-[9px] tracking-[3px] uppercase opacity-70" style="color:#ffd700">
+        <div class="text-[9px] tracking-[3px] uppercase opacity-70 text-yellow-400">
           Jam
         </div>
-        <div
-          class="text-7xl md:text-8xl font-black leading-none tabular-nums"
-          style="color:#ffd700"
-        >
+        <div class="text-7xl md:text-8xl font-black leading-none tabular-nums text-yellow-400">
           {format_clock(@snapshot.jam_clock_s)}
         </div>
       </div>
 
       <div :if={@snapshot.lineup_clock_running} class="text-center">
-        <div class="text-[9px] tracking-[3px] uppercase opacity-70" style="color:#22d3ee">
+        <div class="text-[9px] tracking-[3px] uppercase opacity-70 text-cyan-400">
           Lineup
         </div>
-        <div
-          class="text-7xl md:text-8xl font-black leading-none tabular-nums"
-          style="color:#22d3ee"
-        >
+        <div class="text-7xl md:text-8xl font-black leading-none tabular-nums text-cyan-400">
           {format_clock(@snapshot.lineup_clock_s)}
         </div>
       </div>
 
       <div :if={@snapshot.timeout_clock_running} class="text-center">
-        <div class="text-[9px] tracking-[3px] uppercase opacity-70" style="color:#f87171">
+        <div class="text-[9px] tracking-[3px] uppercase opacity-70 text-red-400">
           Timeout
         </div>
-        <div
-          class="text-7xl md:text-8xl font-black leading-none tabular-nums"
-          style="color:#f87171"
-        >
+        <div class="text-7xl md:text-8xl font-black leading-none tabular-nums text-red-400">
           {format_clock(@snapshot.timeout_clock_s)}
         </div>
       </div>
@@ -107,8 +97,8 @@
           --:--
         </div>
       </div>
-      
-<!-- Period clock (secondary) -->
+
+      <%!-- Period clock (secondary) --%>
       <div class="text-center mt-1">
         <div class="text-[8px] tracking-[2px] uppercase opacity-25">Period Clock</div>
         <div class="text-xl font-bold opacity-40 tabular-nums">
@@ -116,10 +106,10 @@
         </div>
       </div>
     </div>
-    
-<!-- col 5: spacer -->
 
-    <!-- col 6: AWAY -->
+    <%!-- col 5: spacer --%>
+
+    <%!-- col 6: AWAY --%>
     <div class="flex flex-col items-center gap-1">
       <div
         class="text-sm tracking-[4px] uppercase opacity-70"
@@ -137,15 +127,14 @@
       <div class="flex gap-2 items-center mt-1 min-h-[28px]">
         <span
           :if={Map.get(@snapshot, :lead_away, false)}
-          class="audience-lead text-2xl"
-          style="color:#ffd700;filter:drop-shadow(0 0 8px #ffd700)"
+          class="audience-lead text-2xl text-yellow-400"
+          style="filter:drop-shadow(0 0 8px #ffd700)"
         >
           &#9733;
         </span>
         <span
           :if={Map.get(@snapshot, :star_pass_away, false)}
-          class="text-xs font-black px-1.5 py-0.5 rounded"
-          style="color:#22d3ee;background:rgba(34,211,238,0.15);border:1px solid rgba(34,211,238,0.4);letter-spacing:2px"
+          class="text-xs font-black px-1.5 py-0.5 rounded text-cyan-400 border border-cyan-400/40 bg-cyan-400/15 tracking-[2px]"
         >
           SP
         </span>
@@ -154,52 +143,42 @@
         Jam: <span class="text-white/70">{Map.get(@snapshot, :jam_score_away, 0)}</span>
       </div>
     </div>
-    
-<!-- col 7: spacer -->
+
+    <%!-- col 7: spacer --%>
   </main>
-  
-<!-- Footer: timeout dots + OR + inactive clocks -->
+
+  <%!-- Footer: timeout dots + OR + inactive clocks --%>
   <footer class="flex justify-between items-center px-8 py-2">
-    <!-- Home timeouts -->
+    <%!-- Home timeouts --%>
     <div class="flex items-center gap-2">
       <div class="flex gap-1">
         <span
           :for={i <- 1..3}
-          class={"w-2.5 h-2.5 rounded-full #{if i > 3 - Map.get(@snapshot, :timeouts_home, 0), do: "opacity-25", else: ""}"}
+          class={"w-2.5 h-2.5 rounded-full #{if i <= Map.get(@snapshot, :timeouts_home, 0), do: "opacity-25", else: ""}"}
           style="background:var(--team-home-color, #e94560)"
-        >
-        </span>
+        />
       </div>
-      <span
-        class={"w-2.5 h-2.5 rounded-full #{if Map.get(@snapshot, :or_used_home, false), do: "opacity-25", else: ""}"}
-        style="background:#a855f7"
-      >
-      </span>
+      <span class={"w-2.5 h-2.5 rounded-full bg-purple-500 #{if Map.get(@snapshot, :or_used_home, false), do: "opacity-25", else: ""}"} />
       <span class="text-[8px] opacity-30">OR</span>
     </div>
-    
-<!-- Inactive clocks -->
-    <div class="text-[10px] opacity-20 tracking-wider flex gap-3">
+
+    <%!-- Inactive clocks --%>
+    <div class="text-[10px] opacity-20 tracking-wider flex gap-3 tabular-nums">
       <span :if={!@snapshot.jam_clock_running}>JAM {format_clock(@snapshot.jam_clock_s)}</span>
       <span :if={!@snapshot.lineup_clock_running}>LINEUP</span>
       <span :if={!@snapshot.timeout_clock_running}>TIMEOUT</span>
     </div>
-    
-<!-- Away timeouts -->
+
+    <%!-- Away timeouts --%>
     <div class="flex items-center gap-2">
       <span class="text-[8px] opacity-30">OR</span>
-      <span
-        class={"w-2.5 h-2.5 rounded-full #{if Map.get(@snapshot, :or_used_away, false), do: "opacity-25", else: ""}"}
-        style="background:#a855f7"
-      >
-      </span>
+      <span class={"w-2.5 h-2.5 rounded-full bg-purple-500 #{if Map.get(@snapshot, :or_used_away, false), do: "opacity-25", else: ""}"} />
       <div class="flex gap-1">
         <span
           :for={i <- 1..3}
-          class={"w-2.5 h-2.5 rounded-full #{if i > 3 - Map.get(@snapshot, :timeouts_away, 0), do: "opacity-25", else: ""}"}
+          class={"w-2.5 h-2.5 rounded-full #{if i <= Map.get(@snapshot, :timeouts_away, 0), do: "opacity-25", else: ""}"}
           style="background:var(--team-away-color, #4ea8de)"
-        >
-        </span>
+        />
       </div>
     </div>
   </footer>
