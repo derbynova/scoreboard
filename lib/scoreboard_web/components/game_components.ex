@@ -24,7 +24,7 @@ defmodule ScoreboardWeb.GameComponents do
   defp phase_label(:halftime), do: "Halftime"
   defp phase_label(:final), do: "Final"
 
-  def active_clock(snapshot) do
+  defp active_clock(snapshot) do
     case snapshot.phase do
       :initial ->
         {"", 0, false}
@@ -123,7 +123,10 @@ defmodule ScoreboardWeb.GameComponents do
       <span class={"text-sm font-semibold #{@label_color}"}>
         {@name}
       </span>
-      <span class="text-6xl font-bold tabular-nums text-base-content">
+      <span
+        id={"score-#{@name |> String.downcase()}"}
+        class="text-6xl font-bold tabular-nums text-base-content"
+      >
         {@score}
       </span>
       <div class="flex items-center gap-2">
@@ -140,7 +143,6 @@ defmodule ScoreboardWeb.GameComponents do
   Renders the game banner with team displays and central clock.
   """
   attr :snapshot, :map, required: true
-  attr :variant, :atom, values: [:compact, :full, :overlay], default: :compact
 
   def game_banner(assigns) do
     {label, seconds, running} = active_clock(assigns.snapshot)
@@ -192,46 +194,16 @@ defmodule ScoreboardWeb.GameComponents do
   def score_controls(assigns) do
     ~H"""
     <div class="flex gap-1">
-      <button
-        phx-click="score"
-        phx-value-team={@team}
-        phx-value-points="-1"
-        class={"flex-1 py-2.5 rounded-md font-bold text-sm #{@bg_dim} #{@text_color}"}
-      >
-        -1
-      </button>
-      <button
-        phx-click="score"
-        phx-value-team={@team}
-        phx-value-points="1"
-        class={"flex-1 py-2.5 rounded-md font-bold text-sm #{@bg_base} #{@text_color}"}
-      >
-        +1
-      </button>
-      <button
-        phx-click="score"
-        phx-value-team={@team}
-        phx-value-points="2"
-        class={"flex-1 py-2.5 rounded-md font-bold text-sm #{@bg_base} #{@text_color}"}
-      >
-        +2
-      </button>
-      <button
-        phx-click="score"
-        phx-value-team={@team}
-        phx-value-points="3"
-        class={"flex-1 py-2.5 rounded-md font-bold text-sm #{@bg_base} #{@text_color}"}
-      >
-        +3
-      </button>
-      <button
-        phx-click="score"
-        phx-value-team={@team}
-        phx-value-points="4"
-        class={"flex-1 py-2.5 rounded-md font-bold text-sm #{@bg_base} #{@text_color}"}
-      >
-        +4
-      </button>
+      <%= for pts <- [-1, 1, 2, 3, 4] do %>
+        <button
+          phx-click="score"
+          phx-value-team={@team}
+          phx-value-points={to_string(pts)}
+          class={"flex-1 py-2.5 rounded-md font-bold text-sm #{if(pts < 0, do: @bg_dim, else: @bg_base)} #{@text_color}"}
+        >
+          {if pts > 0, do: "+#{pts}", else: to_string(pts)}
+        </button>
+      <% end %>
     </div>
     """
   end
@@ -274,7 +246,7 @@ defmodule ScoreboardWeb.GameComponents do
     ~H"""
     <div class="border-t border-base-300 pt-2">
       <div class="grid grid-cols-[1fr_auto_1fr] gap-2">
-        <!-- Home side -->
+        <%!-- Home side --%>
         <div class="flex flex-col gap-1">
           <.score_controls
             team="home"
@@ -289,13 +261,13 @@ defmodule ScoreboardWeb.GameComponents do
             text_to="text-red-300"
           />
         </div>
-        
-    <!-- Center CTA -->
+
+        <%!-- Center CTA --%>
         <div class="flex items-center justify-center">
           {render_center_cta(assigns)}
         </div>
-        
-    <!-- Away side -->
+
+        <%!-- Away side --%>
         <div class="flex flex-col gap-1">
           <.score_controls
             team="away"
@@ -315,64 +287,39 @@ defmodule ScoreboardWeb.GameComponents do
     """
   end
 
-  defp render_center_cta(%{snapshot: %{phase: :initial}} = assigns) do
-    ~H"""
-    <button
-      phx-click="start_period"
-      class="px-6 py-3 rounded-lg font-bold text-lg bg-primary text-primary-content"
-    >
-      Start Period 1
-    </button>
-    """
-  end
-
-  defp render_center_cta(%{snapshot: %{phase: :lineup}} = assigns) do
-    ~H"""
-    <button
-      phx-click="start_jam"
-      class="px-6 py-3 rounded-lg font-bold text-lg bg-amber-400 text-black"
-    >
-      Start Jam <kbd class="kbd kbd-sm ml-2">Space</kbd>
-    </button>
-    """
-  end
-
-  defp render_center_cta(%{snapshot: %{phase: :jam_running}} = assigns) do
-    ~H"""
-    <button
-      phx-click="end_jam"
-      class="px-6 py-3 rounded-lg font-bold text-lg bg-emerald-500 text-white"
-    >
-      End Jam <kbd class="kbd kbd-sm ml-2">Space</kbd>
-    </button>
-    """
-  end
-
-  defp render_center_cta(%{snapshot: %{phase: :timeout}} = assigns) do
-    ~H"""
-    <button
-      phx-click="end_timeout"
-      class="px-6 py-3 rounded-lg font-bold text-lg bg-sky-500 text-white"
-    >
-      End Timeout <kbd class="kbd kbd-sm ml-2">E</kbd>
-    </button>
-    """
-  end
-
-  defp render_center_cta(%{snapshot: %{phase: :halftime}} = assigns) do
-    ~H"""
-    <button
-      phx-click="start_period"
-      class="px-6 py-3 rounded-lg font-bold text-lg bg-primary text-primary-content"
-    >
-      Start Period 2
-    </button>
-    """
-  end
+  @cta %{
+    initial: {"start_period", "Start Period 1", nil, "bg-primary text-primary-content"},
+    lineup: {"start_jam", "Start Jam", "Space", "bg-amber-400 text-black"},
+    jam_running: {"end_jam", "End Jam", "Space", "bg-emerald-500 text-white"},
+    timeout: {"end_timeout", "End Timeout", "E", "bg-sky-500 text-white"},
+    halftime: {"start_period", "Start Period 2", nil, "bg-primary text-primary-content"}
+  }
 
   defp render_center_cta(%{snapshot: %{phase: :final}} = assigns) do
     ~H"""
     <span class="text-base-content/60 font-bold text-lg px-6">Game Over</span>
+    """
+  end
+
+  defp render_center_cta(%{snapshot: %{phase: phase}} = assigns) do
+    {action, label, shortcut, classes} = Map.fetch!(@cta, phase)
+
+    assigns =
+      assign(assigns,
+        cta_action: action,
+        cta_label: label,
+        cta_shortcut: shortcut,
+        cta_classes: classes
+      )
+
+    ~H"""
+    <button
+      phx-click={@cta_action}
+      class={"px-6 py-3 rounded-lg font-bold text-lg #{@cta_classes}"}
+    >
+      {@cta_label}
+      <kbd :if={@cta_shortcut} class="kbd kbd-sm ml-2">{@cta_shortcut}</kbd>
+    </button>
     """
   end
 end

@@ -85,10 +85,8 @@ defmodule ScoreboardWeb.GameLiveTest do
       render_click(view, :score, %{"team" => "home", "points" => "3"})
       render_click(view, :score, %{"team" => "away", "points" => "2"})
       :timer.sleep(150)
-      # Home score
-      assert render(view) =~ "3"
-      # Away score
-      assert render(view) =~ "2"
+      assert has_element?(view, "#score-home", "3")
+      assert has_element?(view, "#score-away", "2")
 
       # 4. End jam
       render_click(view, :end_jam)
@@ -136,9 +134,8 @@ defmodule ScoreboardWeb.GameLiveTest do
       :timer.sleep(150)
 
       # Home score should be 2
-      html = render(view)
-      assert html =~ "2"
-      refute html =~ "Invalid points value"
+      assert has_element?(view, "#score-home", "2")
+      refute render(view) =~ "Invalid points value"
     end
 
     test "timeout cycle", %{conn: conn} do
