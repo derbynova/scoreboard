@@ -103,3 +103,14 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Audience display: lead indicator blink */
+.audience-lead {
+  animation: audience-lead-blink 1s steps(6) infinite;
+}
+
+@keyframes audience-lead-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}

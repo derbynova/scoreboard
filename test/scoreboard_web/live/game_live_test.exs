@@ -368,14 +368,15 @@ defmodule ScoreboardWeb.GameLiveTest do
       {:ok, view, _html} = live(conn, ~p"/games/audience-render/scoreboard")
 
       html = render(view)
-      assert html =~ "HOME"
-      assert html =~ "AWAY"
+      assert html =~ "Home"
+      assert html =~ "Away"
       assert html =~ "PERIOD"
-      assert html =~ "JAM"
+      assert html =~ "Period Clock"
+      assert has_element?(view, "#audience-score-home")
+      assert has_element?(view, "#audience-score-away")
     end
 
     test "redirects to index for unknown game", %{conn: conn} do
-      # When game doesn't exist, mount returns a live_redirect
       assert {:error, {:live_redirect, %{to: "/"}}} =
                live(conn, ~p"/games/unknown-game/scoreboard")
     end
@@ -385,28 +386,39 @@ defmodule ScoreboardWeb.GameLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/games/audience-update/scoreboard")
 
-      # Initial state
-      # Initial scores
-      assert render(view) =~ "0"
+      assert has_element?(view, "#audience-score-home", "0")
 
-      # Start period
       GameServer.start_period("audience-update")
       :timer.sleep(150)
 
       html = render(view)
-      # Lineup clock should be shown
-      assert html =~ "LINEUP"
+      assert html =~ "Lineup"
 
-      # Start jam and add score
       GameServer.start_jam("audience-update")
       GameServer.add_score("audience-update", :home, 5)
       :timer.sleep(150)
 
       html = render(view)
-      # Updated home score
-      assert html =~ "5"
-      # Jam clock should be shown
-      assert html =~ "JAM CLOCK"
+      assert has_element?(view, "#audience-score-home", "5")
+      assert html =~ "Jam"
+    end
+
+    test "shows timeout clock in red during timeout", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("audience-timeout")
+
+      {:ok, view, _html} = live(conn, ~p"/games/audience-timeout/scoreboard")
+
+      GameServer.start_period("audience-timeout")
+      :timer.sleep(150)
+      GameServer.start_jam("audience-timeout")
+      :timer.sleep(150)
+      GameServer.call_timeout("audience-timeout")
+      :timer.sleep(150)
+
+      html = render(view)
+      assert html =~ "Timeout"
+      # Timeout clock is running, so "TIMEOUT" should NOT appear in inactive clocks footer
+      refute html =~ ">TIMEOUT<"
     end
   end
 end
