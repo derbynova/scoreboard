@@ -4,18 +4,26 @@ defmodule ScoreboardWeb.GameLiveTest do
   import Phoenix.LiveViewTest
 
   setup do
-    # Clean up any leftover game processes from previous tests
-    for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
-      DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)
-    end
+    cleanup_game_processes()
 
     on_exit(fn ->
-      for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
-        DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)
-      end
+      cleanup_game_processes()
     end)
 
     :ok
+  end
+
+  defp cleanup_game_processes do
+    for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
+      ref = Process.monitor(pid)
+      DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)
+
+      receive do
+        {:DOWN, ^ref, :process, ^pid, _} -> :ok
+      after
+        1000 -> Process.exit(pid, :kill)
+      end
+    end
   end
 
   describe "Index LiveView" do
