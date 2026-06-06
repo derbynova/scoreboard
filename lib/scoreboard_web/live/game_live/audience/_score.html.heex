@@ -1,0 +1,62 @@
+<div
+  class="audience-display fixed inset-0 flex flex-col select-none overflow-hidden"
+  style="background:#0a0a1a;color:#fff;font-family:'Courier New',monospace"
+>
+  <main class="flex-1 flex items-center justify-center gap-16">
+    <div class="flex flex-col items-center gap-1">
+      <div
+        class="text-sm tracking-[4px] uppercase opacity-70"
+        style="color:var(--team-home-color, #e94560)"
+      >
+        Home
+      </div>
+      <div
+        id="audience-score-home"
+        class="text-[120px] md:text-[160px] font-black leading-none tabular-nums"
+        style="color:var(--team-home-color, #e94560)"
+      >
+        {@snapshot.score_home}
+      </div>
+      <div class="flex gap-2 items-center mt-1 min-h-[28px]">
+        <span
+          :if={Map.get(@snapshot, :lead_home, false)}
+          class="audience-lead text-2xl text-yellow-400"
+          style="filter:drop-shadow(0 0 8px #ffd700)"
+        >
+          &#9733;
+        </span>
+      </div>
+    </div>
+
+    <div class="text-3xl opacity-15 font-extralight">vs</div>
+
+    <div class="flex flex-col items-center gap-1">
+      <div
+        class="text-sm tracking-[4px] uppercase opacity-70"
+        style="color:var(--team-away-color, #4ea8de)"
+      >
+        Away
+      </div>
+      <div
+        id="audience-score-away"
+        class="text-[120px] md:text-[160px] font-black leading-none tabular-nums"
+        style="color:var(--team-away-color, #4ea8de)"
+      >
+        {@snapshot.score_away}
+      </div>
+      <div class="flex gap-2 items-center mt-1 min-h-[28px]">
+        <span
+          :if={Map.get(@snapshot, :lead_away, false)}
+          class="audience-lead text-2xl text-yellow-400"
+          style="filter:drop-shadow(0 0 8px #ffd700)"
+        >
+          &#9733;
+        </span>
+      </div>
+    </div>
+  </main>
+
+  <div class="text-center pb-4 text-[9px] tracking-[2px] opacity-20">
+    P{@snapshot.period} &middot; J{@snapshot.jam_number}
+  </div>
+</div>
