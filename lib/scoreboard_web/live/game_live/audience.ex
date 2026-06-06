@@ -2,12 +2,16 @@ defmodule ScoreboardWeb.GameLive.Audience do
   use ScoreboardWeb, :live_view
 
   @impl true
-  def mount(%{"id" => game_id}, _session, socket) do
+  def mount(%{"id" => game_id} = params, _session, socket) do
+    audience_layout = Map.get(params, "layout", "full")
+
     try do
       case GameServer.snapshot(game_id) do
         {:ok, snapshot} ->
           GameServer.subscribe(game_id)
-          {:ok, assign(socket, game_id: game_id, snapshot: snapshot)}
+
+          {:ok,
+           assign(socket, game_id: game_id, snapshot: snapshot, audience_layout: audience_layout)}
 
         {:error, _reason} ->
           {:ok, push_navigate(socket, to: ~p"/")}
