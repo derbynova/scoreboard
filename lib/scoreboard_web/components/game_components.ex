@@ -59,9 +59,27 @@ defmodule ScoreboardWeb.GameComponents do
       <span class="text-sm font-medium">
         P{@snapshot.period} · J{@snapshot.jam_number} · {Clock.format_clock(@snapshot.period_clock_s)}
       </span>
-      <.link navigate={"/game/#{@game_id}"} class="text-sm text-primary hover:underline">
-        Audience View
-      </.link>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-base-content/50">Audience:</span>
+        <.link
+          navigate={"/games/#{@game_id}/scoreboard?layout=full"}
+          class="text-sm text-primary hover:underline"
+        >
+          Full
+        </.link>
+        <.link
+          navigate={"/games/#{@game_id}/scoreboard?layout=score"}
+          class="text-sm text-primary hover:underline"
+        >
+          Score
+        </.link>
+        <.link
+          navigate={"/games/#{@game_id}/scoreboard?layout=clock"}
+          class="text-sm text-primary hover:underline"
+        >
+          Clock
+        </.link>
+      </div>
     </div>
     """
   end
