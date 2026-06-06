@@ -32,6 +32,11 @@ defmodule ScoreboardWeb.GameLive.Audience do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event("apply_layout", %{"layout" => layout}, socket) do
+    {:noreply, assign(socket, :audience_layout, layout)}
+  end
+
+  @impl true
   def terminate(_reason, socket) do
     if game_id = socket.assigns[:game_id] do
       GameServer.unsubscribe(game_id)

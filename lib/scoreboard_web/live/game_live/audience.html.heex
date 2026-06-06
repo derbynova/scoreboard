@@ -1,8 +1,27 @@
-<%= cond do %>
-  <% @audience_layout == "score" -> %>
-    <._score snapshot={@snapshot} />
-  <% @audience_layout == "clock" -> %>
-    <._clock snapshot={@snapshot} />
-  <% true -> %>
-    <._full snapshot={@snapshot} />
-<% end %>
+<div id="audience-layout-root" phx-hook=".LayoutPersistence">
+  <%= cond do %>
+    <% @audience_layout == "score" -> %>
+      <._score snapshot={@snapshot} />
+    <% @audience_layout == "clock" -> %>
+      <._clock snapshot={@snapshot} />
+    <% true -> %>
+      <._full snapshot={@snapshot} />
+  <% end %>
+</div>
+<script :type={Phoenix.LiveView.ColocatedHook} name=".LayoutPersistence">
+  export default {
+    mounted() {
+      const url = new URL(window.location.href)
+      const layoutParam = url.searchParams.get("layout")
+
+      if (layoutParam) {
+        localStorage.setItem("audience-layout", layoutParam)
+      } else {
+        const saved = localStorage.getItem("audience-layout")
+        if (saved && saved !== "full") {
+          this.pushEvent("apply_layout", { layout: saved })
+        }
+      }
+    }
+  }
+</script>
