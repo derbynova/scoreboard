@@ -421,4 +421,85 @@ defmodule ScoreboardWeb.GameLiveTest do
       refute html =~ ">TIMEOUT<"
     end
   end
+
+  describe "Audience Layout Variants" do
+    test "default layout renders full scoreboard", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-default")
+
+      {:ok, view, _html} = live(conn, ~p"/games/layout-default/scoreboard")
+
+      assert has_element?(view, "#audience-score-home")
+      assert has_element?(view, "#audience-score-away")
+      assert render(view) =~ "Period Clock"
+      assert render(view) =~ "PERIOD"
+      assert render(view) =~ "F11 for fullscreen"
+    end
+
+    test "?layout=full renders full scoreboard", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-full")
+
+      {:ok, view, _html} = live(conn, "/games/layout-full/scoreboard?layout=full")
+
+      assert has_element?(view, "#audience-score-home")
+      assert has_element?(view, "#audience-score-away")
+      assert render(view) =~ "Period Clock"
+      assert render(view) =~ "PERIOD"
+    end
+
+    test "?layout=score renders score-only view", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-score")
+
+      {:ok, view, _html} = live(conn, "/games/layout-score/scoreboard?layout=score")
+
+      html = render(view)
+      assert has_element?(view, "#audience-score-home")
+      assert has_element?(view, "#audience-score-away")
+      refute html =~ "Period Clock"
+      refute html =~ "F11 for fullscreen"
+      assert html =~ "vs"
+    end
+
+    test "?layout=clock renders clock-only view", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-clock")
+
+      {:ok, view, _html} = live(conn, "/games/layout-clock/scoreboard?layout=clock")
+
+      html = render(view)
+      refute has_element?(view, "#audience-score-home")
+      refute has_element?(view, "#audience-score-away")
+      assert html =~ "Period Clock"
+      assert html =~ "PERIOD"
+      refute html =~ "F11 for fullscreen"
+    end
+
+    test "clock layout shows jam clock when running", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-clock-jam")
+
+      {:ok, view, _html} = live(conn, "/games/layout-clock-jam/scoreboard?layout=clock")
+
+      GameServer.start_period("layout-clock-jam")
+      :timer.sleep(150)
+      GameServer.start_jam("layout-clock-jam")
+      :timer.sleep(150)
+
+      html = render(view)
+      assert html =~ "Jam"
+    end
+
+    test "score layout updates when game state changes", %{conn: conn} do
+      {:ok, _pid} = GameServer.start_game("layout-score-update")
+
+      {:ok, view, _html} = live(conn, "/games/layout-score-update/scoreboard?layout=score")
+
+      assert has_element?(view, "#audience-score-home", "0")
+
+      GameServer.start_period("layout-score-update")
+      :timer.sleep(150)
+      GameServer.start_jam("layout-score-update")
+      GameServer.add_score("layout-score-update", :home, 5)
+      :timer.sleep(150)
+
+      assert has_element?(view, "#audience-score-home", "5")
+    end
+  end
 end
