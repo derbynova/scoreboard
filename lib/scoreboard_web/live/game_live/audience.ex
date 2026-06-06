@@ -1,6 +1,8 @@
 defmodule ScoreboardWeb.GameLive.Audience do
   use ScoreboardWeb, :live_view
 
+  embed_templates "audience/*"
+
   @impl true
   def mount(%{"id" => game_id} = params, _session, socket) do
     audience_layout = Map.get(params, "layout", "full")

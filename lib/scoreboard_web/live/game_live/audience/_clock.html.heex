@@ -1,0 +1,50 @@
+<div
+  class="audience-display fixed inset-0 flex flex-col select-none overflow-hidden"
+  style="background:#0a0a1a;color:#fff;font-family:'Courier New',monospace"
+>
+  <main class="flex-1 flex flex-col items-center justify-center">
+    <div :if={@snapshot.jam_clock_running} class="text-center">
+      <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-yellow-400">Jam</div>
+      <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-yellow-400">
+        {format_clock(@snapshot.jam_clock_s)}
+      </div>
+    </div>
+
+    <div :if={@snapshot.lineup_clock_running} class="text-center">
+      <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-cyan-400">Lineup</div>
+      <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-cyan-400">
+        {format_clock(@snapshot.lineup_clock_s)}
+      </div>
+    </div>
+
+    <div :if={@snapshot.timeout_clock_running} class="text-center">
+      <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-red-400">Timeout</div>
+      <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-red-400">
+        {format_clock(@snapshot.timeout_clock_s)}
+      </div>
+    </div>
+
+    <div
+      :if={
+        !@snapshot.jam_clock_running and !@snapshot.lineup_clock_running and
+          !@snapshot.timeout_clock_running
+      }
+      class="text-center"
+    >
+      <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums opacity-15">
+        --:--
+      </div>
+    </div>
+
+    <div class="text-center mt-6">
+      <div class="text-[9px] tracking-[2px] uppercase opacity-25">Period Clock</div>
+      <div class="text-3xl font-bold opacity-40 tabular-nums">
+        {format_clock(@snapshot.period_clock_s)}
+      </div>
+    </div>
+  </main>
+
+  <div class="text-center pb-4 text-[9px] tracking-[2px] opacity-15">
+    PERIOD {@snapshot.period} &middot; JAM {@snapshot.jam_number}
+  </div>
+</div>
