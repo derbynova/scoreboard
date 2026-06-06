@@ -1,6 +1,7 @@
 [tools]
 elixir = "1.19.5"
 erlang = "28.3.1"
+github-cli = "latest"
 node = "24"
 
 [tasks.install-pre-commit]
