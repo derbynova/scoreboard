@@ -1,5 +1,5 @@
 defmodule Scoreboard.Derby.GameTest do
-  use Scoreboard.DataCase, async: true
+  use Scoreboard.DataCase, async: false
   alias Scoreboard.Derby
 
   describe "basic CRUD" do

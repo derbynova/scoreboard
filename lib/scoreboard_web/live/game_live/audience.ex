@@ -31,9 +31,16 @@ defmodule ScoreboardWeb.GameLive.Audience do
   @impl true
   def handle_info(_msg, socket), do: {:noreply, socket}
 
+  @valid_layouts ~w(full score clock)
+
   @impl true
-  def handle_event("apply_layout", %{"layout" => layout}, socket) do
+  def handle_event("apply_layout", %{"layout" => layout}, socket)
+      when layout in @valid_layouts do
     {:noreply, assign(socket, :audience_layout, layout)}
+  end
+
+  def handle_event("apply_layout", _params, socket) do
+    {:noreply, socket}
   end
 
   @impl true
