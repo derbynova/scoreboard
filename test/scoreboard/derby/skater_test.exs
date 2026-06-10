@@ -1,5 +1,5 @@
 defmodule Scoreboard.Derby.SkaterTest do
-  use Scoreboard.DataCase, async: true
+  use Scoreboard.DataCase, async: false
   alias Scoreboard.Derby
 
   test "fails without a number" do

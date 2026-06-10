@@ -1,5 +1,5 @@
 defmodule Scoreboard.Derby.JamTest do
-  use Scoreboard.DataCase, async: true
+  use Scoreboard.DataCase, async: false
   alias Scoreboard.Derby
 
   describe "with a valid jam" do

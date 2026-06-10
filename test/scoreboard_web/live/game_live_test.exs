@@ -2,6 +2,7 @@ defmodule ScoreboardWeb.GameLiveTest do
   use ScoreboardWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
+  import Scoreboard.GameTestHelpers
 
   setup do
     cleanup_game_processes()
@@ -11,19 +12,6 @@ defmodule ScoreboardWeb.GameLiveTest do
     end)
 
     :ok
-  end
-
-  defp cleanup_game_processes do
-    for {pid, _} <- DynamicSupervisor.which_children(GameServer.Runtime.Supervisor) do
-      ref = Process.monitor(pid)
-      DynamicSupervisor.terminate_child(GameServer.Runtime.Supervisor, pid)
-
-      receive do
-        {:DOWN, ^ref, :process, ^pid, _} -> :ok
-      after
-        1000 -> Process.exit(pid, :kill)
-      end
-    end
   end
 
   describe "Index LiveView" do
