@@ -14,10 +14,17 @@ a second implementation of game transitions in Ash.
 
 ## Restarting a match
 
-After restarting the application, open the same `/games/<id>/operator` URL. The
-operator view restores an existing saved match; an unknown ID does not create a
-new match. A crashed supervised GameServer restores automatically. A full game
-listing remains tracked separately in DBN-24.
+After restarting the application, open `/` and choose **Resume match** from the
+saved match list, or open the same `/games/<id>/operator` URL. The operator view
+restores an existing saved match; an unknown ID does not create a new match. A
+crashed supervised GameServer restores automatically.
+
+The library lists matches by their most recent saved action, with cursor pagination
+and a manual refresh button. Finished matches include a summary and public display
+link. Reading the library or a saved public display never starts a match process.
+Dates are explicitly shown in UTC. Until team configuration (DBN-7) is delivered,
+Home/Away labels match the current operator view; use the date and match ID to
+distinguish fixtures. The legacy `/games/new` URL still opens the library.
 
 Recovery validates journal sequence, version and checkpoint shape before using
 the latest checkpoint. A gap, unsupported version or invalid checkpoint prevents
