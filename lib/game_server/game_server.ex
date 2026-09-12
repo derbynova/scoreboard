@@ -13,6 +13,16 @@ defmodule GameServer do
     GameServer.Runtime.Supervisor.stop_game(game_id)
   end
 
+  def restore_game(game_id) do
+    case GameServer.EventStore.load(game_id) do
+      {:ok, nil, 0} -> {:error, :not_found}
+      {:ok, _game, _sequence} -> start_game(game_id)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def resume_recovered(game_id), do: GenServer.call(via(game_id), :resume_recovered)
+
   def subscribe(game_id) do
     Phoenix.PubSub.subscribe(Scoreboard.PubSub, topic(game_id))
   end

@@ -26,6 +26,7 @@ defmodule ScoreboardWeb.Layouts do
 
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :game, :boolean, default: false
 
   attr :current_scope, :map,
     default: nil,
@@ -35,7 +36,7 @@ defmodule ScoreboardWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
+    <header :if={!@game} class="navbar px-4 sm:px-6 lg:px-8">
       <div class="flex-1">
         <a href="/" class="flex-1 flex w-fit items-center gap-2">
           <img src={~p"/images/logo.svg"} width="36" />
@@ -62,8 +63,8 @@ defmodule ScoreboardWeb.Layouts do
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class={if(@game, do: "px-4 py-6", else: "px-4 py-20 sm:px-6 lg:px-8")}>
+      <div class={if(@game, do: "mx-auto max-w-3xl space-y-4", else: "mx-auto max-w-2xl space-y-4")}>
         {render_slot(@inner_block)}
       </div>
     </main>

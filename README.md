@@ -7,6 +7,10 @@ To start your Phoenix server:
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
+Match actions are saved in SQLite. After a restart, reopen the match's operator
+URL to recover it with clocks paused for confirmation. See
+[match recovery](docs/match-recovery.md) for guarantees, limitations and migration instructions.
+
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## Learn more

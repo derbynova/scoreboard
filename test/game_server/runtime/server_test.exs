@@ -1,5 +1,5 @@
 defmodule GameServer.Runtime.ServerTest do
-  use ExUnit.Case, async: false
+  use Scoreboard.DataCase, async: false
 
   alias GameServer.Runtime.Server
 
@@ -15,14 +15,14 @@ defmodule GameServer.Runtime.ServerTest do
 
   describe "start_link/1" do
     test "starts a game process registered in Registry" do
-      assert {:ok, pid} = Server.start_link("test-game-1")
+      assert {:ok, pid} = start_supervised_server("test-game-1")
       assert [{^pid, _}] = Registry.lookup(GameRegistry, "test-game-1")
     end
   end
 
   describe "transitions" do
     test "start_period returns ok with snapshot" do
-      {:ok, _pid} = Server.start_link("g1")
+      {:ok, _pid} = start_supervised_server("g1")
 
       assert {:ok, snap} = GenServer.call(via("g1"), :start_period)
       assert snap.phase == :lineup
@@ -30,7 +30,7 @@ defmodule GameServer.Runtime.ServerTest do
     end
 
     test "start_jam → end_jam cycle" do
-      {:ok, _pid} = Server.start_link("g2")
+      {:ok, _pid} = start_supervised_server("g2")
       GenServer.call(via("g2"), :start_period)
 
       assert {:ok, snap} = GenServer.call(via("g2"), :start_jam)
@@ -42,7 +42,7 @@ defmodule GameServer.Runtime.ServerTest do
     end
 
     test "call_timeout → end_timeout cycle" do
-      {:ok, _pid} = Server.start_link("g3")
+      {:ok, _pid} = start_supervised_server("g3")
       GenServer.call(via("g3"), :start_period)
       GenServer.call(via("g3"), :start_jam)
 
@@ -54,7 +54,7 @@ defmodule GameServer.Runtime.ServerTest do
     end
 
     test "end_period transitions to halftime" do
-      {:ok, _pid} = Server.start_link("g4")
+      {:ok, _pid} = start_supervised_server("g4")
       GenServer.call(via("g4"), :start_period)
       GenServer.call(via("g4"), :start_jam)
 
@@ -63,7 +63,7 @@ defmodule GameServer.Runtime.ServerTest do
     end
 
     test "full game: period 1 → halftime → period 2 → final" do
-      {:ok, _pid} = Server.start_link("g5")
+      {:ok, _pid} = start_supervised_server("g5")
 
       {:ok, _} = GenServer.call(via("g5"), :start_period)
       {:ok, _} = GenServer.call(via("g5"), :start_jam)
@@ -80,7 +80,7 @@ defmodule GameServer.Runtime.ServerTest do
 
   describe "score" do
     test "adds points to home and away" do
-      {:ok, _pid} = Server.start_link("g-score")
+      {:ok, _pid} = start_supervised_server("g-score")
       GenServer.call(via("g-score"), :start_period)
       GenServer.call(via("g-score"), :start_jam)
 
@@ -94,7 +94,7 @@ defmodule GameServer.Runtime.ServerTest do
 
   describe "snapshot" do
     test "returns current game state" do
-      {:ok, _pid} = Server.start_link("g-snap")
+      {:ok, _pid} = start_supervised_server("g-snap")
 
       assert {:ok, snap} = GenServer.call(via("g-snap"), :snapshot)
       assert snap.phase == :initial
@@ -104,27 +104,27 @@ defmodule GameServer.Runtime.ServerTest do
 
   describe "error handling" do
     test "invalid transition returns error without crashing" do
-      {:ok, pid} = Server.start_link("g-err")
+      {:ok, pid} = start_supervised_server("g-err")
 
       assert {:error, :invalid_transition, :start_jam, :initial} =
                GenServer.call(via("g-err"), :start_jam)
 
-      assert Process.alive?(pid)
+      assert %Server{} = :sys.get_state(pid)
     end
 
     test "score in initial phase returns error" do
-      {:ok, pid} = Server.start_link("g-err2")
+      {:ok, pid} = start_supervised_server("g-err2")
 
       assert {:error, :invalid_transition, :score, :initial} =
                GenServer.call(via("g-err2"), {:score, :home, 1})
 
-      assert Process.alive?(pid)
+      assert %Server{} = :sys.get_state(pid)
     end
   end
 
   describe "broadcasting" do
     test "transition broadcasts snapshot via PubSub" do
-      {:ok, _pid} = Server.start_link("g-bcast")
+      {:ok, _pid} = start_supervised_server("g-bcast")
       Phoenix.PubSub.subscribe(Scoreboard.PubSub, Server.topic("g-bcast"))
 
       {:ok, _} = GenServer.call(via("g-bcast"), :start_period)
@@ -134,7 +134,7 @@ defmodule GameServer.Runtime.ServerTest do
     end
 
     test "score broadcasts snapshot" do
-      {:ok, _pid} = Server.start_link("g-bcast-score")
+      {:ok, _pid} = start_supervised_server("g-bcast-score")
       GenServer.call(via("g-bcast-score"), :start_period)
       GenServer.call(via("g-bcast-score"), :start_jam)
       Phoenix.PubSub.subscribe(Scoreboard.PubSub, Server.topic("g-bcast-score"))
@@ -147,46 +147,32 @@ defmodule GameServer.Runtime.ServerTest do
   end
 
   describe "tick" do
-    test "tick broadcasts when seconds change" do
-      {:ok, _pid} = Server.start_link("g-tick")
+    test "tick broadcasts elapsed seconds" do
+      {:ok, pid} = start_supervised_server("g-tick")
+      GenServer.call(via("g-tick"), :start_period)
       Phoenix.PubSub.subscribe(Scoreboard.PubSub, Server.topic("g-tick"))
 
-      {:ok, _} = GenServer.call(via("g-tick"), :start_period)
+      :sys.replace_state(pid, fn state ->
+        put_in(state.game.period_clock.accumulated, 2000)
+      end)
 
-      assert_received {:game_update, _}
-
-      Process.sleep(150)
-      assert_received {:game_update, snap}
-      assert snap.period_clock_s < 1800
+      send(pid, :tick)
+      assert_receive {:game_update, snap}
+      assert snap.period_clock_s <= 1798
     end
 
-    test "tick stops after end_game" do
-      {:ok, pid} = Server.start_link("g-tick-stop")
-      Phoenix.PubSub.subscribe(Scoreboard.PubSub, Server.topic("g-tick-stop"))
-
-      GenServer.call(via("g-tick-stop"), :start_period)
-      GenServer.call(via("g-tick-stop"), :start_jam)
-
-      flush_pubsub()
-
-      GenServer.call(via("g-tick-stop"), :end_game)
-
-      Process.sleep(200)
-      flush_pubsub()
-
-      Process.sleep(200)
-      refute_received {:game_update, _}
-      assert Process.alive?(pid)
+    test "tick stops after a valid end_game in period two" do
+      {:ok, pid} = start_supervised_server("g-tick-stop")
+      GameServer.start_period("g-tick-stop")
+      GameServer.end_period("g-tick-stop")
+      GameServer.start_period("g-tick-stop")
+      assert {:ok, %{phase: :final}} = GameServer.end_game("g-tick-stop")
+      send(pid, :tick)
+      assert %{ticking: false, game: %{phase: :final}} = :sys.get_state(pid)
     end
   end
+
+  defp start_supervised_server(id), do: {:ok, start_supervised!({Server, id}, id: id)}
 
   defp via(game_id), do: {:via, Registry, {GameRegistry, game_id}}
-
-  defp flush_pubsub do
-    receive do
-      {:game_update, _} -> flush_pubsub()
-    after
-      0 -> :ok
-    end
-  end
 end

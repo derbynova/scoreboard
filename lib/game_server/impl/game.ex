@@ -16,6 +16,7 @@ defmodule GameServer.Impl.Game do
     jam_number: 0,
     score_home: 0,
     score_away: 0,
+    recovery_clocks: [],
     period_clock: Timer.new(@period_ms),
     lineup_clock: Timer.new(@lineup_ms),
     jam_clock: Timer.new(@jam_ms),
@@ -147,6 +148,7 @@ defmodule GameServer.Impl.Game do
 
   def snapshot(game, now) do
     %{
+      recovery_required: game.recovery_clocks != [],
       phase: game.phase,
       period: game.period,
       jam_number: game.jam_number,

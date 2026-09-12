@@ -1,10 +1,30 @@
-<div
-  id="operator-view"
-  phx-window-keydown="keydown"
-  phx-key="key,code,shiftKey"
-  class="max-w-3xl mx-auto"
->
-  <.top_bar game_id={@game_id} snapshot={@snapshot} />
-  <.game_banner snapshot={@snapshot} />
-  <.control_panel snapshot={@snapshot} />
-</div>
+<Layouts.app flash={@flash} game>
+  <div
+    id="operator-view"
+    phx-window-keydown="keydown"
+    phx-key="key,code,shiftKey"
+    class="max-w-3xl mx-auto"
+  >
+    <.top_bar game_id={@game_id} snapshot={@snapshot} />
+    <section
+      :if={@snapshot.recovery_required}
+      id="recovery-notice"
+      role="alert"
+      class="my-4 rounded-lg border border-amber-400/50 bg-amber-950 p-4 text-amber-100"
+    >
+      <h2 class="font-semibold">Match recovered — clocks paused</h2>
+      <p class="mt-2 text-sm">
+        Scores and clocks were restored to the last saved action. Time since that action is not included. Check the displayed times with the officials before resuming.
+      </p>
+      <button
+        id="resume-recovered"
+        phx-click="resume_recovered"
+        class="mt-3 rounded-md bg-amber-300 px-4 py-2 font-semibold text-black transition hover:bg-amber-200"
+      >
+        Resume saved clocks
+      </button>
+    </section>
+    <.game_banner snapshot={@snapshot} />
+    <.control_panel :if={!@snapshot.recovery_required} snapshot={@snapshot} />
+  </div>
+</Layouts.app>
