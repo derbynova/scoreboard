@@ -9,7 +9,7 @@ defmodule ScoreboardWeb.GameLive.Audience do
     if connected?(socket), do: GameServer.subscribe(game_id)
 
     try do
-      case GameServer.snapshot(game_id) do
+      case GameServer.saved_or_live_snapshot(game_id) do
         {:ok, snapshot} ->
           {:ok,
            assign(socket, game_id: game_id, snapshot: snapshot, audience_layout: audience_layout)}

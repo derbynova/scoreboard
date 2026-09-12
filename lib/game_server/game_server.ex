@@ -23,6 +23,29 @@ defmodule GameServer do
 
   def resume_recovered(game_id), do: GenServer.call(via(game_id), :resume_recovered)
 
+  # Public readers may inspect a saved match without creating a runtime or resuming clocks.
+  def saved_or_live_snapshot(game_id) do
+    case Registry.lookup(GameRegistry, game_id) do
+      [] -> saved_snapshot(game_id)
+      _ -> snapshot(game_id)
+    end
+  catch
+    :exit, _ -> saved_snapshot(game_id)
+  end
+
+  defp saved_snapshot(game_id) do
+    case GameServer.EventStore.load(game_id) do
+      {:ok, nil, 0} ->
+        {:error, :not_found}
+
+      {:ok, game, _} ->
+        {:ok, GameServer.Impl.Game.snapshot(game, System.monotonic_time(:millisecond))}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
   def subscribe(game_id) do
     Phoenix.PubSub.subscribe(Scoreboard.PubSub, topic(game_id))
   end
