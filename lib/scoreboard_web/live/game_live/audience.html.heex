@@ -1,13 +1,23 @@
-<div id="audience-layout-root" phx-hook=".LayoutPersistence">
-  <%= cond do %>
-    <% @audience_layout == "score" -> %>
-      <._score snapshot={@snapshot} />
-    <% @audience_layout == "clock" -> %>
-      <._clock snapshot={@snapshot} />
-    <% true -> %>
-      <._full snapshot={@snapshot} />
-  <% end %>
-</div>
+<Layouts.app flash={@flash} game>
+  <div
+    :if={@snapshot.recovery_required}
+    id="audience-recovery-notice"
+    role="status"
+    class="fixed top-0 inset-x-0 z-50 bg-amber-300 px-4 py-2 text-center font-semibold text-black"
+  >
+    Match recovered — clocks paused pending operator confirmation
+  </div>
+  <div id="audience-layout-root" phx-hook=".LayoutPersistence">
+    <%= cond do %>
+      <% @audience_layout == "score" -> %>
+        <._score snapshot={@snapshot} />
+      <% @audience_layout == "clock" -> %>
+        <._clock snapshot={@snapshot} />
+      <% true -> %>
+        <._full snapshot={@snapshot} />
+    <% end %>
+  </div>
+</Layouts.app>
 <script :type={Phoenix.LiveView.ColocatedHook} name=".LayoutPersistence">
   export default {
     mounted() {

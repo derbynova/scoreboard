@@ -6,12 +6,11 @@ defmodule ScoreboardWeb.GameLive.Audience do
   @impl true
   def mount(%{"id" => game_id} = params, _session, socket) do
     audience_layout = Map.get(params, "layout", "full")
+    if connected?(socket), do: GameServer.subscribe(game_id)
 
     try do
       case GameServer.snapshot(game_id) do
         {:ok, snapshot} ->
-          GameServer.subscribe(game_id)
-
           {:ok,
            assign(socket, game_id: game_id, snapshot: snapshot, audience_layout: audience_layout)}
 

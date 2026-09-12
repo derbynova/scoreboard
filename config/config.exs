@@ -7,6 +7,9 @@
 # General application configuration
 import Config
 
+# A successful action commit must survive a power loss, including in WAL mode.
+config :scoreboard, Scoreboard.Repo, synchronous: :full
+
 config :ash,
   allow_forbidden_field_for_relationships_by_default?: true,
   include_embedded_source_by_default?: false,

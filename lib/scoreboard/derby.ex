@@ -6,6 +6,10 @@ defmodule Scoreboard.Derby do
   end
 
   resources do
+    resource Scoreboard.Derby.GameEvent do
+      define :append_game_event, action: :append
+    end
+
     resource Scoreboard.Derby.Team do
       define :create_team, action: :create
       define :get_team, action: :read, get_by: :id

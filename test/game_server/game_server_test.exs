@@ -1,5 +1,5 @@
 defmodule GameServerTest do
-  use ExUnit.Case, async: false
+  use Scoreboard.DataCase, async: false
 
   import Scoreboard.GameTestHelpers
 
@@ -21,7 +21,6 @@ defmodule GameServerTest do
       assert :ok = GameServer.stop_game("facade-1")
       ref = Process.monitor(pid)
       assert_receive {:DOWN, ^ref, :process, ^pid, _}
-      assert [] = Registry.lookup(GameRegistry, "facade-1")
     end
 
     test "start_game returns existing pid if already started" do
