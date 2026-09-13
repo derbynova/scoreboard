@@ -119,10 +119,23 @@ defmodule GameServer.Runtime.Server do
 
   @impl true
   def handle_info(:tick, state) do
-    snapshot = Game.snapshot(state.game, now())
+    timestamp = now()
+    {game, snapshot} = Game.expire_clocks(state.game, timestamp)
 
     state =
-      if snapshot != state.last_broadcasted_snapshot, do: broadcast(state, snapshot), else: state
+      cond do
+        game != state.game ->
+          {:reply, _result, updated} =
+            commit({game, snapshot}, state, "expire_clocks", %{}, timestamp)
+
+          updated
+
+        snapshot != state.last_broadcasted_snapshot ->
+          broadcast(state, snapshot)
+
+        true ->
+          state
+      end
 
     {:noreply, ensure_ticking(%{state | ticking: false})}
   end
@@ -130,7 +143,7 @@ defmodule GameServer.Runtime.Server do
   defp ensure_ticking(%{ticking: true} = state), do: state
 
   defp ensure_ticking(state) do
-    if state.game.recovery_clocks == [] and state.game.phase in [:lineup, :jam_running, :timeout] do
+    if Game.ticking?(state.game) do
       Process.send_after(self(), :tick, @tick_ms)
       %{state | ticking: true}
     else

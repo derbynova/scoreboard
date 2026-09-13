@@ -240,7 +240,8 @@ defmodule GameServer.Impl.GameTest do
       assert Map.keys(snap) |> Enum.sort() ==
                ~w[recovery_required jam_clock_running jam_number lineup_clock_running period period_clock_running
                 phase score_away score_home timeout_clock_running
-                period_clock_s lineup_clock_s jam_clock_s timeout_clock_s]a |> Enum.sort()
+                period_clock_s lineup_clock_s jam_clock_s timeout_clock_s intermission_clock_s intermission_clock_running period_expired]a
+               |> Enum.sort()
     end
 
     test "clocks are not running in initial state" do
@@ -252,10 +253,10 @@ defmodule GameServer.Impl.GameTest do
       refute snap.timeout_clock_running
     end
 
-    test "period and lineup clocks running after start_period" do
+    test "only lineup runs while preparing the period" do
       {_game, snap} = Game.new("g1") |> Game.start_period(0)
 
-      assert snap.period_clock_running
+      refute snap.period_clock_running
       assert snap.lineup_clock_running
       refute snap.jam_clock_running
       refute snap.timeout_clock_running
@@ -297,7 +298,7 @@ defmodule GameServer.Impl.GameTest do
       refute snap.timeout_clock_running
     end
 
-    test "period and lineup clocks running after end_timeout" do
+    test "only lineup runs after ending a timeout" do
       {_game, snap} =
         Game.new("g1")
         |> Game.start_period(0)
@@ -305,7 +306,7 @@ defmodule GameServer.Impl.GameTest do
         |> then(fn {g, _} -> Game.call_timeout(g, 5000) end)
         |> then(fn {g, _} -> Game.end_timeout(g, 65_000) end)
 
-      assert snap.period_clock_running
+      refute snap.period_clock_running
       assert snap.lineup_clock_running
       refute snap.jam_clock_running
       refute snap.timeout_clock_running
@@ -331,7 +332,8 @@ defmodule GameServer.Impl.GameTest do
       game = in_lineup("g1")
 
       snap = Game.snapshot(game, 10_000)
-      assert snap.period_clock_s == 1790
+      assert snap.period_clock_s == 1800
+      assert snap.lineup_clock_s == 20
     end
   end
 

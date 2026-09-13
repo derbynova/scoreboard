@@ -40,7 +40,7 @@ defmodule ScoreboardWeb.GameLiveTest do
       {:ok, view, _html} = live(conn, ~p"/games/operator-test/operator")
 
       # Check initial state rendering
-      assert render(view) =~ "Start Period 1"
+      assert has_element?(view, "#phase-action", "Prepare Period 1")
       # Check team labels instead of generic score labels
       assert render(view) =~ "Home"
       assert render(view) =~ "Away"
@@ -92,7 +92,7 @@ defmodule ScoreboardWeb.GameLiveTest do
       # 5. End period 1 (via keyboard 'e' in lineup)
       render_hook(view, "keydown", %{"key" => "e", "code" => "KeyE"})
       :timer.sleep(150)
-      assert render(view) =~ "Start Period 2"
+      assert has_element?(view, "#phase-action", "Prepare Period 2")
 
       # 6. Start period 2
       render_click(view, :start_period)

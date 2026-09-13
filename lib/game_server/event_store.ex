@@ -6,7 +6,7 @@ defmodule GameServer.EventStore do
   alias Scoreboard.Derby
   alias Scoreboard.Derby.GameEvent
 
-  @actions ~w(create start_period start_jam end_jam call_timeout end_timeout end_period end_game score resume_recovered)
+  @actions ~w(create start_period start_jam end_jam call_timeout end_timeout end_period end_game score resume_recovered expire_clocks)
 
   # Select one row per match in SQLite rather than loading every match journal.
   # The journal is still validated in full when an operator restores a match.

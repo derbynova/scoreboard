@@ -25,6 +25,26 @@
       </button>
     </section>
     <.game_banner snapshot={@snapshot} />
+    <p
+      :if={@snapshot.period_expired and @snapshot.phase in [:lineup, :jam_running, :timeout]}
+      id="period-expired-notice"
+      role="status"
+      class="my-3 text-center text-sm text-amber-300"
+    >
+      Period clock expired. {if @snapshot.phase == :jam_running,
+        do: "Confirm the end of the current jam on the officials’ signal.",
+        else: "Confirm the period end on the officials’ signal."}
+    </p>
+    <p
+      :if={
+        @snapshot.phase == :lineup and !@snapshot.period_clock_running and
+          !@snapshot.period_expired
+      }
+      id="period-waiting-notice"
+      class="my-3 text-center text-sm text-base-content/70"
+    >
+      Period clock starts with the next jam.
+    </p>
     <.control_panel :if={!@snapshot.recovery_required} snapshot={@snapshot} />
   </div>
 </Layouts.app>

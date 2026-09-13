@@ -11,6 +11,9 @@ Match actions are saved in SQLite. After a restart, reopen the match's operator
 URL to recover it with clocks paused for confirmation. See
 [match recovery](docs/match-recovery.md) for guarantees, limitations and migration instructions.
 
+For clock behavior, end-of-period confirmation and upgrade compatibility, see
+[match clocks](docs/clock-cycle.md).
+
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## Learn more

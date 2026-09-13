@@ -3,21 +3,36 @@
   style="background:#0a0a1a;color:#fff;font-family:'Courier New',monospace"
 >
   <main class="flex-1 flex flex-col items-center justify-center">
-    <div :if={@snapshot.jam_clock_running} class="text-center">
+    <div
+      :if={@snapshot.phase == :jam_running}
+      id="audience-jam-clock"
+      data-running={to_string(@snapshot.jam_clock_running)}
+      class="text-center"
+    >
       <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-yellow-400">Jam</div>
       <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-yellow-400">
         {format_clock(@snapshot.jam_clock_s)}
       </div>
     </div>
 
-    <div :if={@snapshot.lineup_clock_running} class="text-center">
+    <div
+      :if={@snapshot.phase == :lineup}
+      id="audience-lineup-clock"
+      data-running={to_string(@snapshot.lineup_clock_running)}
+      class="text-center"
+    >
       <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-cyan-400">Lineup</div>
       <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-cyan-400">
         {format_clock(@snapshot.lineup_clock_s)}
       </div>
     </div>
 
-    <div :if={@snapshot.timeout_clock_running} class="text-center">
+    <div
+      :if={@snapshot.phase == :timeout}
+      id="audience-timeout-clock"
+      data-running={to_string(@snapshot.timeout_clock_running)}
+      class="text-center"
+    >
       <div class="text-[10px] tracking-[3px] uppercase opacity-70 text-red-400">Timeout</div>
       <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums text-red-400">
         {format_clock(@snapshot.timeout_clock_s)}
@@ -25,10 +40,19 @@
     </div>
 
     <div
-      :if={
-        !@snapshot.jam_clock_running and !@snapshot.lineup_clock_running and
-          !@snapshot.timeout_clock_running
-      }
+      :if={@snapshot.phase == :halftime}
+      id="audience-intermission-clock"
+      data-running={to_string(@snapshot.intermission_clock_running)}
+      class="text-center"
+    >
+      <div class="text-xs uppercase tracking-widest text-slate-300">Intermission</div>
+      <div class="text-7xl md:text-8xl font-black tabular-nums text-slate-100">
+        {format_clock(@snapshot.intermission_clock_s)}
+      </div>
+    </div>
+
+    <div
+      :if={@snapshot.phase in [:initial, :final]}
       class="text-center"
     >
       <div class="text-[120px] md:text-[180px] font-black leading-none tabular-nums opacity-15">

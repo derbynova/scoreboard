@@ -32,7 +32,7 @@ defmodule GameServer.Impl.Game do
     |> Map.merge(%{
       phase: :lineup,
       period: period + 1,
-      period_clock: Timer.reset(game.period_clock) |> Timer.start(now),
+      period_clock: Timer.reset(game.period_clock),
       lineup_clock: Timer.reset(game.lineup_clock) |> Timer.start(now),
       jam_clock: Timer.reset(game.jam_clock),
       timeout_clock: Timer.reset(game.timeout_clock),
@@ -49,9 +49,21 @@ defmodule GameServer.Impl.Game do
     do: {:error, :invalid_transition, :start_period, phase}
 
   def start_jam(%{phase: :lineup} = game, now) do
+    if Timer.finished?(game.period_clock, now) do
+      {:error, :period_expired}
+    else
+      do_start_jam(game, now)
+    end
+  end
+
+  def start_jam(%{phase: phase}, _now),
+    do: {:error, :invalid_transition, :start_jam, phase}
+
+  defp do_start_jam(game, now) do
     game
     |> Map.merge(%{
       phase: :jam_running,
+      period_clock: Timer.start(game.period_clock, now),
       jam_number: game.jam_number + 1,
       lineup_clock: game.lineup_clock |> Timer.reset(),
       jam_clock: Timer.reset(game.jam_clock) |> Timer.start(now)
@@ -59,14 +71,11 @@ defmodule GameServer.Impl.Game do
     |> return_with_snapshot(now)
   end
 
-  def start_jam(%{phase: phase}, _now),
-    do: {:error, :invalid_transition, :start_jam, phase}
-
   def end_jam(%{phase: :jam_running} = game, now) do
     game
     |> Map.merge(%{
       phase: :lineup,
-      lineup_clock: game.lineup_clock |> Timer.start(now),
+      lineup_clock: next_lineup(game, now),
       jam_clock: game.jam_clock |> Timer.stop(now)
     })
     |> return_with_snapshot(now)
@@ -94,8 +103,8 @@ defmodule GameServer.Impl.Game do
     game
     |> Map.merge(%{
       phase: :lineup,
-      period_clock: game.period_clock |> Timer.start(now),
-      lineup_clock: game.lineup_clock |> Timer.start(now),
+      period_clock: game.period_clock |> Timer.stop(now),
+      lineup_clock: next_lineup(game, now),
       timeout_clock: game.timeout_clock |> Timer.stop(now)
     })
     |> return_with_snapshot(now)
@@ -154,16 +163,47 @@ defmodule GameServer.Impl.Game do
       jam_number: game.jam_number,
       score_home: game.score_home,
       score_away: game.score_away,
-      period_clock_s: Timer.remaining(game.period_clock, now) |> div(1000),
-      lineup_clock_s: Timer.remaining(game.lineup_clock, now) |> div(1000),
-      jam_clock_s: Timer.remaining(game.jam_clock, now) |> div(1000),
-      timeout_clock_s: Timer.remaining(game.timeout_clock, now) |> div(1000),
+      period_clock_s: Timer.remaining(game.period_clock, now) |> then(&div(&1 + 999, 1000)),
+      lineup_clock_s: Timer.remaining(game.lineup_clock, now) |> then(&div(&1 + 999, 1000)),
+      jam_clock_s: Timer.remaining(game.jam_clock, now) |> then(&div(&1 + 999, 1000)),
+      timeout_clock_s: Timer.remaining(game.timeout_clock, now) |> then(&div(&1 + 999, 1000)),
+      intermission_clock_s:
+        Timer.remaining(game.intermission_clock, now) |> then(&div(&1 + 999, 1000)),
+      period_expired: Timer.finished?(game.period_clock, now),
       period_clock_running: game.period_clock.running,
       lineup_clock_running: game.lineup_clock.running,
       jam_clock_running: game.jam_clock.running,
-      timeout_clock_running: game.timeout_clock.running
+      timeout_clock_running: game.timeout_clock.running,
+      intermission_clock_running: game.intermission_clock.running
     }
   end
 
-  defp return_with_snapshot(game, now), do: {game, snapshot(game, now)}
+  @clocks [:period_clock, :lineup_clock, :jam_clock, :timeout_clock, :intermission_clock]
+
+  # Expiration stops clocks, never issues an official's phase command.
+  def expire_clocks(game, now) do
+    updated =
+      Enum.reduce(@clocks, game, fn name, game ->
+        Map.update!(game, name, &Timer.expire(&1, now))
+      end)
+
+    updated =
+      if updated.phase == :lineup and Timer.finished?(updated.period_clock, now) do
+        %{updated | lineup_clock: Timer.stop(updated.lineup_clock, now)}
+      else
+        updated
+      end
+
+    {updated, snapshot(updated, now)}
+  end
+
+  def ticking?(game),
+    do: game.recovery_clocks == [] and Enum.any?(@clocks, &Map.fetch!(game, &1).running)
+
+  defp next_lineup(game, now) do
+    timer = Timer.reset(game.lineup_clock)
+    if Timer.finished?(game.period_clock, now), do: timer, else: Timer.start(timer, now)
+  end
+
+  defp return_with_snapshot(game, now), do: expire_clocks(game, now)
 end

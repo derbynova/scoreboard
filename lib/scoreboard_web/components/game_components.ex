@@ -39,7 +39,7 @@ defmodule ScoreboardWeb.GameComponents do
         {phase_label(snapshot.phase), snapshot.timeout_clock_s, snapshot.timeout_clock_running}
 
       :halftime ->
-        {"Intermission", snapshot.period_clock_s, false}
+        {"Intermission", snapshot.intermission_clock_s, snapshot.intermission_clock_running}
 
       :final ->
         {"", 0, false}
@@ -107,6 +107,7 @@ defmodule ScoreboardWeb.GameComponents do
   @doc """
   Renders a clock display with label and formatted time.
   """
+  attr :id, :string, default: nil
   attr :label, :string, default: ""
   attr :seconds, :integer, default: 0
   attr :running, :boolean, default: false
@@ -114,7 +115,7 @@ defmodule ScoreboardWeb.GameComponents do
 
   def clock_display(assigns) do
     ~H"""
-    <div class="flex flex-col items-center gap-1">
+    <div id={@id} data-running={to_string(@running)} class="flex flex-col items-center gap-1">
       <span :if={@label != ""} class={"text-xs uppercase tracking-widest #{@color}"}>
         {@label}
       </span>
@@ -184,6 +185,7 @@ defmodule ScoreboardWeb.GameComponents do
         or_count={1}
       />
       <.clock_display
+        id="operator-active-clock"
         label={@clock_label}
         seconds={@clock_seconds}
         running={@clock_running}
@@ -306,16 +308,35 @@ defmodule ScoreboardWeb.GameComponents do
   end
 
   @cta %{
-    initial: {"start_period", "Start Period 1", nil, "bg-primary text-primary-content"},
+    initial: {"start_period", "Prepare Period 1", nil, "bg-primary text-primary-content"},
     lineup: {"start_jam", "Start Jam", "Space", "bg-amber-400 text-black"},
     jam_running: {"end_jam", "End Jam", "Space", "bg-emerald-500 text-white"},
     timeout: {"end_timeout", "End Timeout", "E", "bg-sky-500 text-white"},
-    halftime: {"start_period", "Start Period 2", nil, "bg-primary text-primary-content"}
+    halftime: {"start_period", "Prepare Period 2", nil, "bg-primary text-primary-content"}
   }
 
   defp render_center_cta(%{snapshot: %{phase: :final}} = assigns) do
     ~H"""
     <span class="text-base-content/60 font-bold text-lg px-6">Game Over</span>
+    """
+  end
+
+  defp render_center_cta(%{snapshot: %{phase: :lineup, period_expired: true}} = assigns) do
+    assigns =
+      assign(
+        assigns,
+        :end_action,
+        if(assigns.snapshot.period == 1, do: "end_period", else: "end_game")
+      )
+
+    ~H"""
+    <button
+      id="confirm-period-end"
+      phx-click={@end_action}
+      class="rounded-lg bg-amber-400 px-6 py-3 text-lg font-bold text-black transition hover:bg-amber-300 focus-visible:outline-2 focus-visible:outline-offset-2"
+    >
+      {if @snapshot.period == 1, do: "Confirm Period End", else: "Confirm Game End"}
+    </button>
     """
   end
 
@@ -332,6 +353,7 @@ defmodule ScoreboardWeb.GameComponents do
 
     ~H"""
     <button
+      id="phase-action"
       phx-click={@cta_action}
       class={"px-6 py-3 rounded-lg font-bold text-lg #{@cta_classes}"}
     >

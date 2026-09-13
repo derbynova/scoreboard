@@ -176,6 +176,14 @@ defmodule ScoreboardWeb.GameLive.Operator do
              "Action not saved. Check local storage and retry; the action was not applied."
            )}
 
+        {:error, :period_expired} ->
+          {:noreply,
+           put_flash(
+             socket,
+             :error,
+             "Period clock expired. Confirm the period end with the officials."
+           )}
+
         {:error, :recovery_required} ->
           {:noreply,
            put_flash(

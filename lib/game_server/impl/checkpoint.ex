@@ -56,7 +56,7 @@ defmodule GameServer.Impl.Checkpoint do
       end)
 
     game = %{game | recovery_clocks: []}
-    {game, Game.snapshot(game, now)}
+    Game.expire_clocks(game, now)
   end
 
   defp decode_clocks(clocks) do
