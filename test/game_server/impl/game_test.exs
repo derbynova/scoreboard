@@ -238,7 +238,7 @@ defmodule GameServer.Impl.GameTest do
       snap = Game.snapshot(game, 0)
 
       assert Map.keys(snap) |> Enum.sort() ==
-               ~w[recovery_required jam_clock_running jam_number lineup_clock_running period period_clock_running
+               ~w[clocks recovery_required jam_clock_running jam_number lineup_clock_running period period_clock_running
                 phase score_away score_home timeout_clock_running
                 period_clock_s lineup_clock_s jam_clock_s timeout_clock_s intermission_clock_s intermission_clock_running period_expired]a
                |> Enum.sort()

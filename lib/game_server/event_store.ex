@@ -6,7 +6,28 @@ defmodule GameServer.EventStore do
   alias Scoreboard.Derby
   alias Scoreboard.Derby.GameEvent
 
-  @actions ~w(create start_period start_jam end_jam call_timeout end_timeout end_period end_game score resume_recovered expire_clocks)
+  @actions ~w(create start_period start_jam end_jam call_timeout end_timeout end_period end_game score resume_recovered expire_clocks correct_clock)
+
+  def list_clock_corrections(id, before_sequence \\ nil) do
+    query =
+      Ecto.Query.from(e in GameEvent,
+        where: e.game_id == ^id and e.action == "correct_clock",
+        order_by: [desc: e.sequence],
+        limit: 21
+      )
+
+    query =
+      if before_sequence,
+        do: Ecto.Query.from(e in query, where: e.sequence < ^before_sequence),
+        else: query
+
+    events = Scoreboard.Repo.all(query)
+    page = Enum.take(events, 20)
+    cursor = if length(events) > 20, do: List.last(page).sequence, else: nil
+    {:ok, page, cursor}
+  rescue
+    _error in [Exqlite.Error, DBConnection.ConnectionError] -> {:error, :storage_unavailable}
+  end
 
   # Select one row per match in SQLite rather than loading every match journal.
   # The journal is still validated in full when an operator restores a match.

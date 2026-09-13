@@ -54,6 +54,34 @@ defmodule GameServer.Runtime.Server do
     commit(Checkpoint.resume(state.game, timestamp), state, "resume_recovered", %{}, timestamp)
   end
 
+  def handle_call({:correct_clock, clock, remaining_ms, context}, _from, state) do
+    timestamp = now()
+    {current, _snapshot} = Game.expire_clocks(state.game, timestamp)
+    result = Game.correct_clock(current, clock, remaining_ms, timestamp, context)
+
+    payload =
+      case result do
+        {:error, _} ->
+          %{}
+
+        {_game, _snapshot} ->
+          before = Map.fetch!(Game.clock_details(current, timestamp), clock)
+
+          %{
+            "clock" => Atom.to_string(clock),
+            "before_ms" => before.remaining_ms,
+            "after_ms" => remaining_ms,
+            "running" => before.running,
+            "resume_on_confirmation" => before.resume_on_confirmation,
+            "phase" => Atom.to_string(state.game.phase),
+            "period" => state.game.period,
+            "jam_number" => state.game.jam_number
+          }
+      end
+
+    commit(result, state, "correct_clock", payload, timestamp)
+  end
+
   def handle_call(_command, _from, %{game: %{recovery_clocks: [_ | _]}} = state) do
     {:reply, {:error, :recovery_required}, state}
   end
@@ -103,11 +131,19 @@ defmodule GameServer.Runtime.Server do
 
   defp commit({game, snapshot}, state, action, payload, timestamp) do
     case EventStore.append(game, state.sequence + 1, action, payload, timestamp) do
-      {:ok, _} ->
+      {:ok, event} ->
         state =
           %{state | game: game, sequence: state.sequence + 1}
           |> ensure_ticking()
           |> broadcast(snapshot)
+
+        if action == "correct_clock" do
+          Phoenix.PubSub.broadcast(
+            Scoreboard.PubSub,
+            topic(game.id),
+            {:clock_corrected, event}
+          )
+        end
 
         {:reply, {:ok, snapshot}, state}
 

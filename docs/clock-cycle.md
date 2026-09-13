@@ -27,7 +27,7 @@ Expired clocks stop and stay visible. The operator follows the officials' signal
 The timing reference is [WFTDA Rules 20250101, sections 1.1 and 1.3](https://rules.wftda.com/01_params.html),
 verified 2026-09-13. Overtime, additional jams and end-period reviews require the
 separate DBN-18/DBN-17 work. The current final-state confirmation does not implement
-those situations or certify the result. Manual time corrections are DBN-79.
+those situations or certify the result. See [manual time corrections](clock-corrections.md) for DBN-79.
 
 ## Persistence and recovery
 
