@@ -19,7 +19,8 @@
       <button
         id="resume-recovered"
         phx-click="resume_recovered"
-        class="mt-3 rounded-md bg-amber-300 px-4 py-2 font-semibold text-black transition hover:bg-amber-200"
+        disabled={@editing_clock != nil}
+        class="mt-3 rounded-md bg-amber-300 px-4 py-2 font-semibold text-black transition hover:bg-amber-200 disabled:opacity-40"
       >
         Resume saved clocks
       </button>
@@ -46,5 +47,166 @@
       Period clock starts with the next jam.
     </p>
     <.control_panel :if={!@snapshot.recovery_required} snapshot={@snapshot} />
+    <section
+      id="clock-corrections"
+      aria-labelledby="clock-corrections-heading"
+      class="my-6 rounded-xl border border-white/10 bg-slate-900 p-5 text-slate-100"
+    >
+      <div class="flex items-center gap-2">
+        <.icon name="hero-clock" class="size-5 text-sky-300" />
+        <h2 id="clock-corrections-heading" class="font-semibold">Correct remaining time</h2>
+      </div>
+      <p class="mt-2 text-sm text-slate-300">
+        Follow the officials’ decision. Select a clock to adjust its remaining time; configured durations stay unchanged.
+      </p>
+      <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <button
+          :for={{label, clock} <- @clock_options}
+          id={"edit-#{clock}"}
+          phx-click="edit_clock"
+          phx-value-clock={clock}
+          aria-pressed={@editing_clock == clock}
+          class={[
+            "rounded-lg border p-3 text-left transition hover:border-sky-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300",
+            if(@editing_clock == clock,
+              do: "border-sky-300 bg-sky-300/10",
+              else: "border-white/10 bg-slate-950/40"
+            )
+          ]}
+        >
+          <span class="block text-xs text-slate-300">{label}</span>
+          <span class="mt-1 block font-mono text-xl tabular-nums">
+            {format_clock(div(@snapshot.clocks[clock].remaining_ms, 1000))}
+          </span>
+          <span class="mt-1 block text-xs text-slate-400">
+            {if @snapshot.clocks[clock].running, do: "Running", else: "Stopped"}
+          </span>
+        </button>
+      </div>
+      <.form
+        :if={@editing_clock}
+        for={@clock_form}
+        id="clock-correction-form"
+        phx-change="validate_clock"
+        phx-submit="save_clock"
+        class="mt-5 border-t border-white/10 pt-5"
+      >
+        <h3 class="font-medium">{@editing_label} · new remaining time</h3>
+        <p id="clock-correction-bounds" class="mt-1 text-sm text-slate-300">
+          Allowed: 00:00–{format_clock(div(@editing_details.duration_ms, 1000))}.
+          Game shortcuts are suspended while editing. Clocks keep their current state.
+        </p>
+        <div class="mt-4 grid max-w-xs grid-cols-2 gap-3">
+          <.input
+            field={@clock_form[:minutes]}
+            id="correction-minutes"
+            type="number"
+            label="Minutes"
+            min="0"
+            max={div(@editing_details.duration_ms, 60_000)}
+            step="1"
+            required
+            aria-describedby="clock-correction-bounds"
+            class="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 font-mono text-lg text-white focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/30"
+          />
+          <.input
+            field={@clock_form[:seconds]}
+            id="correction-seconds"
+            type="number"
+            label="Seconds"
+            min="0"
+            max="59"
+            step="1"
+            required
+            aria-describedby="clock-correction-bounds"
+            class="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 font-mono text-lg text-white focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/30"
+          />
+        </div>
+        <div
+          id="clock-correction-preview"
+          aria-live="polite"
+          class="mt-3 rounded-lg bg-slate-950/60 p-3 text-sm"
+        >
+          <p>
+            When selected
+            <span class="font-mono">
+              {format_clock(div(@editing_details.remaining_ms, 1000))}
+            </span>
+            →
+            <span class="font-mono text-sky-200">
+              {if @correction_seconds, do: format_clock(@correction_seconds), else: "—"}
+            </span>
+          </p>
+          <p class="mt-1 text-slate-300">
+            {correction_effect(@editing_details, @correction_seconds)}
+          </p>
+          <p
+            :if={
+              @editing_clock == :period_clock and @correction_seconds == 0 and
+                @snapshot.phase == :lineup
+            }
+            class="mt-1 text-amber-200"
+          >
+            The lineup clock also stops when the period reaches zero.
+          </p>
+        </div>
+        <div class="mt-4 flex gap-3">
+          <button
+            id="save-clock-correction"
+            type="submit"
+            disabled={is_nil(@correction_seconds)}
+            phx-disable-with="Saving…"
+            class="rounded-lg bg-sky-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:opacity-40"
+          >
+            Save correction
+          </button>
+          <button
+            id="cancel-clock-correction"
+            type="button"
+            phx-click="cancel_clock"
+            class="rounded-lg px-4 py-2 text-sm text-slate-300 transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+      <details id="clock-history" class="mt-5 border-t border-white/10 pt-4">
+        <summary class="cursor-pointer text-sm font-medium text-slate-300">
+          Clock correction history
+        </summary>
+        <div id="clock-history-entries" phx-update="stream" class="mt-3 space-y-2">
+          <p id="clock-history-empty" class="hidden text-sm text-slate-400 only:block">
+            No clock corrections saved.
+          </p>
+          <article
+            :for={{id, event} <- @streams.clock_history}
+            id={id}
+            class="rounded-lg bg-slate-950/50 p-3 text-sm"
+          >
+            <p class="font-medium">
+              {clock_label(event.payload["clock"])}
+              <span class="font-mono tabular-nums">
+                {precise_time(event.payload["before_ms"])} → {precise_time(
+                  event.payload["after_ms"]
+                )}
+              </span>
+            </p>
+            <p class="mt-1 text-xs text-slate-400">
+              Period {event.payload["period"]} · Jam {event.payload["jam_number"]} · {event.payload[
+                "phase"
+              ]} · {Calendar.strftime(event.inserted_at, "%Y-%m-%d %H:%M:%S UTC")} · Action #{event.sequence}
+            </p>
+          </article>
+        </div>
+        <button
+          :if={@history_cursor}
+          id="more-clock-history"
+          phx-click="more_clock_history"
+          class="mt-3 rounded-lg px-3 py-2 text-sm text-sky-200 transition hover:bg-white/10"
+        >
+          Older corrections
+        </button>
+      </details>
+    </section>
   </div>
 </Layouts.app>

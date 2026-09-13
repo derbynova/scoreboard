@@ -23,6 +23,9 @@ defmodule GameServer do
 
   def resume_recovered(game_id), do: GenServer.call(via(game_id), :resume_recovered)
 
+  def correct_clock(game_id, clock, remaining_ms, context \\ nil),
+    do: GenServer.call(via(game_id), {:correct_clock, clock, remaining_ms, context})
+
   # Public readers may inspect a saved match without creating a runtime or resuming clocks.
   def saved_or_live_snapshot(game_id) do
     case Registry.lookup(GameRegistry, game_id) do

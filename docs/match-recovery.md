@@ -39,8 +39,9 @@ before confirmation keep the same paused values and running intent.
 
 **The time between the last saved action and the crash is not recovered.** Ticks
 are display updates and are not journaled. Downtime is never guessed or deducted.
-Compare the recovered values with the officials' clocks before resuming. Manual
-clock correction is tracked in DBN-30 and is not provided by this change.
+Compare the recovered values with the officials' clocks before resuming. Use
+**Correct remaining time** to save corrections while keeping the clocks paused;
+then confirm **Resume saved clocks**. See [clock corrections](clock-corrections.md).
 
 ## Storage failures
 

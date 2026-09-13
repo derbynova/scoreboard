@@ -158,6 +158,10 @@ defmodule GameServer.Impl.Game do
   def snapshot(game, now) do
     %{
       recovery_required: game.recovery_clocks != [],
+      clocks:
+        Map.new(clock_details(game, now), fn {name, details} ->
+          {name, Map.update!(details, :remaining_ms, &(div(&1 + 999, 1000) * 1000))}
+        end),
       phase: game.phase,
       period: game.period,
       jam_number: game.jam_number,
@@ -179,6 +183,59 @@ defmodule GameServer.Impl.Game do
   end
 
   @clocks [:period_clock, :lineup_clock, :jam_clock, :timeout_clock, :intermission_clock]
+
+  def clock_details(game, now) do
+    Map.new(@clocks, fn name ->
+      timer = Map.fetch!(game, name)
+
+      {name,
+       %{
+         remaining_ms: Timer.remaining(timer, now),
+         duration_ms: timer.duration,
+         running: timer.running,
+         resume_on_confirmation: name in game.recovery_clocks,
+         context: clock_context(game, timer)
+       }}
+    end)
+  end
+
+  # Elapsed time may advance while editing, but a phase change, recovery, expiry
+  # or another correction must not silently change the effect being confirmed.
+  defp clock_context(game, timer) do
+    context =
+      {game.phase, game.period, game.jam_number, game.recovery_clocks, timer.duration,
+       timer.accumulated, timer.running, timer.started_at}
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(context)) |> Base.encode16()
+  end
+
+  def correct_clock(game, name, remaining_ms, now, expected_context \\ nil)
+
+  def correct_clock(game, name, remaining_ms, now, expected_context)
+      when name in @clocks and is_integer(remaining_ms) and remaining_ms >= 0 do
+    {game, _snapshot} = expire_clocks(game, now)
+    timer = Map.fetch!(game, name)
+
+    cond do
+      remaining_ms > timer.duration ->
+        {:error, :invalid_clock_time}
+
+      expected_context != nil and expected_context != clock_context(game, timer) ->
+        {:error, :clock_changed}
+
+      true ->
+        corrected = %{
+          timer
+          | accumulated: timer.duration - remaining_ms,
+            started_at: if(timer.running, do: now, else: nil)
+        }
+
+        game |> Map.put(name, corrected) |> return_with_snapshot(now)
+    end
+  end
+
+  def correct_clock(_game, _name, _remaining_ms, _now, _context),
+    do: {:error, :invalid_clock_time}
 
   # Expiration stops clocks, never issues an official's phase command.
   def expire_clocks(game, now) do

@@ -12,7 +12,8 @@ URL to recover it with clocks paused for confirmation. See
 [match recovery](docs/match-recovery.md) for guarantees, limitations and migration instructions.
 
 For clock behavior, end-of-period confirmation and upgrade compatibility, see
-[match clocks](docs/clock-cycle.md).
+[match clocks](docs/clock-cycle.md). To adjust remaining times before recovery or
+during a match, see [clock corrections](docs/clock-corrections.md).
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
