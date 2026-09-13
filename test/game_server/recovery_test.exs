@@ -79,6 +79,89 @@ defmodule GameServer.RecoveryTest do
     assert {:ok, %Game{score_home: 4}, 4} = EventStore.load("write-failure")
   end
 
+  test "expired clocks are saved once and do not resume after restart" do
+    pid = start_game("expiry")
+    GameServer.start_period("expiry")
+    GameServer.end_period("expiry")
+    GameServer.subscribe("expiry")
+
+    :sys.replace_state(pid, fn state ->
+      put_in(state.game.intermission_clock.accumulated, 600_000)
+    end)
+
+    send(pid, :tick)
+    assert_receive {:game_update, %{intermission_clock_s: 0, intermission_clock_running: false}}
+    assert %{sequence: sequence, ticking: false} = :sys.get_state(pid)
+
+    assert {:ok, %Game{phase: :halftime, recovery_clocks: []}, ^sequence} =
+             EventStore.load("expiry")
+
+    send(pid, :tick)
+    assert %{sequence: ^sequence} = :sys.get_state(pid)
+    stop_supervised!("expiry")
+    start_game("expiry")
+
+    assert {:ok, %{phase: :halftime, intermission_clock_s: 0, recovery_required: false}} =
+             GameServer.snapshot("expiry")
+  end
+
+  test "failed expiration write is retried without publishing an unsaved stop" do
+    pid = start_game("expiry-failure")
+    GameServer.start_period("expiry-failure")
+    GameServer.end_period("expiry-failure")
+    GameServer.subscribe("expiry-failure")
+
+    Ecto.Adapters.SQL.query!(Repo, """
+    CREATE TEMP TRIGGER reject_expiry BEFORE INSERT ON game_events
+    WHEN NEW.action = 'expire_clocks'
+    BEGIN SELECT RAISE(ABORT, 'simulated storage failure'); END
+    """)
+
+    capture_log(fn ->
+      :sys.replace_state(pid, fn state ->
+        put_in(state.game.intermission_clock.accumulated, 600_000)
+      end)
+
+      send(pid, :tick)
+      assert %{sequence: 3, game: %{intermission_clock: %{running: true}}} = :sys.get_state(pid)
+    end)
+
+    refute_received {:game_update, %{intermission_clock_running: false}}
+
+    assert {:ok, %Game{recovery_clocks: [:intermission_clock]}, 3} =
+             EventStore.load("expiry-failure")
+
+    Ecto.Adapters.SQL.query!(Repo, "DROP TRIGGER reject_expiry")
+    send(pid, :tick)
+    assert_receive {:game_update, %{intermission_clock_running: false, intermission_clock_s: 0}}
+    assert {:ok, %Game{recovery_clocks: []}, 4} = EventStore.load("expiry-failure")
+  end
+
+  test "intermission continues broadcasting after recovery is confirmed" do
+    start_game("half-recovery")
+    GameServer.start_period("half-recovery")
+    GameServer.end_period("half-recovery")
+    stop_supervised!("half-recovery")
+    pid = start_game("half-recovery")
+
+    assert {:ok, %{intermission_clock_running: false, recovery_required: true}} =
+             GameServer.snapshot("half-recovery")
+
+    assert {:ok, %{intermission_clock_running: true}} =
+             GameServer.resume_recovered("half-recovery")
+
+    assert %{ticking: true} = :sys.get_state(pid)
+    GameServer.subscribe("half-recovery")
+
+    :sys.replace_state(pid, fn state ->
+      put_in(state.game.intermission_clock.accumulated, 2000)
+    end)
+
+    send(pid, :tick)
+    assert_receive {:game_update, %{phase: :halftime, intermission_clock_s: seconds}}
+    assert seconds <= 598
+  end
+
   test "duplicate sequence cannot overwrite a saved action" do
     game = Game.new("duplicate")
     assert {:ok, _} = EventStore.append(game, 1, "create", %{}, 0)

@@ -22,6 +22,33 @@ defmodule GameServer.Impl.CheckpointTest do
     assert twice == restored
   end
 
+  test "the original checkpoint shape remains readable, including expired running clocks" do
+    saved = %{
+      "phase" => "halftime",
+      "period" => 1,
+      "jam_number" => 4,
+      "score_home" => 12,
+      "score_away" => 9,
+      "clocks" => %{
+        "period_clock" => %{"duration" => 1_800_000, "elapsed" => 1_800_000, "running" => false},
+        "jam_clock" => %{"duration" => 120_000, "elapsed" => 120_000, "running" => false},
+        "lineup_clock" => %{"duration" => 30_000, "elapsed" => 0, "running" => false},
+        "timeout_clock" => %{"duration" => 60_000, "elapsed" => 0, "running" => false},
+        "intermission_clock" => %{"duration" => 600_000, "elapsed" => 601_000, "running" => true}
+      }
+    }
+
+    assert {:ok, restored} = Checkpoint.decode("legacy", saved)
+    assert restored.recovery_clocks == [:intermission_clock]
+    {game, snapshot} = Checkpoint.resume(restored, 5_000_000)
+    assert snapshot.phase == :halftime
+    assert snapshot.score_home == 12
+    assert snapshot.intermission_clock_s == 0
+    refute snapshot.intermission_clock_running
+    refute snapshot.recovery_required
+    refute Game.ticking?(game)
+  end
+
   test "malformed timers and phases are rejected" do
     saved = Checkpoint.encode(Game.new("invalid"), 0)
 
